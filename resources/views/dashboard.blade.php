@@ -12,7 +12,7 @@
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="text-gray-500 text-sm">Active Clients</div>
-                        <div class="text-3xl font-bold text-gray-900">{{ $1 }}</div>
+                        <div class="text-3xl font-bold text-gray-900">{{ $totalClients }}</div>
                     </div>
                 </div>
                 
