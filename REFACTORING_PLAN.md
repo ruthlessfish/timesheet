@@ -50,7 +50,7 @@ app/Services/
 - `stopTimer($timeEntry)` - Call stop(), handle calculations
 - `createManualEntry($userId, $data)` - With duration calculation
 
-## Phase 2: Implement Testing Strategy (Week 2-3)
+## Phase 2: Implement Testing Strategy (Complete)
 
 ### 2.1 Test Structure
 ```
@@ -165,18 +165,263 @@ public function store(Request $request) {
 }
 ```
 
-## Success Metrics
+## Phase 4: REST API Development (Week 4-5)
 
-- [ ] 100% test coverage for business logic (services + models)
-- [ ] <50 lines per controller method
-- [ ] All rate calculations use BillingService
-- [ ] Zero direct model manipulation in controllers (use services)
-- [ ] PHPStan level 5 compliance
-- [ ] Test suite runs in <30 seconds
+### 4.1 Why API After Services?
+- **Shared Business Logic**: Services ensure web and API controllers use identical workflows
+- **Zero Duplication**: Rate cascading, invoice generation, analytics computed once
+- **Consistency**: Same validation, authorization, and error handling across interfaces
+- **Future-Proof**: GraphQL, CLI commands, webhooks can leverage same services
 
-## Timeline
+### 4.2 API Structure
 
-- **Week 1**: BillingService + tests
-- **Week 2**: TimeEntryService + InvoiceService + tests
-- **Week 3**: AnalyticsService + tests, refactor controllers
-- **Week 4**: Documentation, edge cases, CI/CD integration
+```
+app/Http/Controllers/Api/
+├── AuthController.php # Sanctum token authentication
+├── ClientController.php # Client CRUD (uses existing services)
+├── ProjectController.php # Project CRUD
+├── TimeEntryController.php # Timer + manual entry (uses TimeEntryService)
+├── InvoiceController.php # Invoice workflow (uses InvoiceService)
+└── DashboardController.php # Analytics (uses AnalyticsService)
+```
+
+### 4.3 API Resources (JSON Transformers)
+
+```
+app/Http/Resources/
+├── ClientResource.php # Client JSON structure
+├── ProjectResource.php # Project with nested client
+├── TimeEntryResource.php # Entry with calculated amounts
+├── InvoiceResource.php # Invoice with items collection
+├── InvoiceItemResource.php # Individual line items
+└── DashboardStatsResource.php # Stats + chart data
+```
+
+
+**Example Resource**:
+```php
+// TimeEntryResource.php
+public function toArray($request) {
+    return [
+        'id' => $this->id,
+        'project' => new ProjectResource($this->whenLoaded('project')),
+        'description' => $this->description,
+        'start_time' => $this->start_time,
+        'end_time' => $this->end_time,
+        'duration' => $this->duration,
+        'hourly_rate' => $this->hourly_rate, // From cascade
+        'amount' => $this->amount, // Calculated via BillingService
+        'is_billable' => $this->is_billable,
+        'is_invoiced' => $this->is_invoiced,
+    ];
+}
+```
+
+### 4.4 API Routes (routes/api.php)
+
+```php
+<?php
+use App\Http\Controllers\Api;
+
+Route::post('login', [Api\AuthController::class, 'login']);
+Route::post('register', [Api\AuthController::class, 'register']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('logout', [Api\AuthController::class, 'logout']);
+    Route::get('user', [Api\AuthController::class, 'user']);
+    
+    // Clients
+    Route::apiResource('clients', Api\ClientController::class);
+    
+    // Projects
+    Route::apiResource('projects', Api\ProjectController::class);
+    Route::get('clients/{client}/projects', [Api\ProjectController::class, 'byClient']);
+    
+    // Time Entries
+    Route::apiResource('time-entries', Api\TimeEntryController::class);
+    Route::post('time-entries/{timeEntry}/stop', [Api\TimeEntryController::class, 'stop']);
+    Route::get('time-entries/active', [Api\TimeEntryController::class, 'active']);
+    
+    // Invoices
+    Route::apiResource('invoices', Api\InvoiceController::class);
+    Route::get('clients/{client}/unbilled-entries', [Api\InvoiceController::class, 'unbilledEntries']);
+    Route::get('invoices/{invoice}/pdf', [Api\InvoiceController::class, 'downloadPdf'])->name('api.invoices.pdf');
+    
+    // Dashboard
+    Route::get('dashboard/stats', [Api\DashboardController::class, 'stats']);
+    Route::get('dashboard/charts', [Api\DashboardController::class, 'charts']);
+});
+```
+
+### 4.5 Example API Controller (Using Services)
+
+```php
+<?php
+// Api\TimeEntryController.php
+class TimeEntryController extends Controller
+{
+    public function __construct(
+        private TimeEntryService $timeEntryService,
+        private BillingService $billingService
+    ) {}
+    
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'project_id' => 'required|exists:projects,id',
+            'description' => 'nullable|string',
+            'start_time' => 'nullable|date',
+            'end_time' => 'nullable|date|after:start_time',
+        ]);
+        
+        // Use service - same logic as web controller
+        $timeEntry = $this->timeEntryService->createManualEntry(
+            userId: auth()->id(),
+            data: $validated
+        );
+        
+        return new TimeEntryResource($timeEntry->load('project.client'));
+    }
+    
+    public function stop(TimeEntry $timeEntry)
+    {
+        $this->authorize('update', $timeEntry);
+        
+        // Use service - ensures consistent duration calculation
+        $timeEntry = $this->timeEntryService->stopTimer($timeEntry);
+        
+        return new TimeEntryResource($timeEntry);
+    }
+}
+```
+
+### 4.6 Authentication Strategy
+ - Laravel Sanctum for API tokens
+ - Token Abilities: Control permissions per token
+    - client:read, client:write
+    - project:read, project:write
+    - time-entry:read, time-entry:write
+    - invoice:read, invoice:write
+ - Multiple Tokens: Mobile app, web SPA, third-party integrations
+ - Token Expiration: Configurable per use case
+
+### 4.7 API Testing Strategy
+
+```
+tests/Feature/Api/
+├── AuthTest.php                 # Registration, login, logout, token management
+├── ClientApiTest.php            # CRUD endpoints, authorization
+├── ProjectApiTest.php           # CRUD + client relationship filtering
+├── TimeEntryApiTest.php         # Timer workflow, active timer constraint
+├── InvoiceApiTest.php           # Creation workflow, PDF download, unbilled queries
+└── DashboardApiTest.php         # Stats calculations, chart data structure
+```
+
+**Testing Pattern:**
+
+```php
+<?php
+// tests/Feature/Api/TimeEntryApiTest.php
+public function test_can_start_timer_via_api()
+{
+    $user = User::factory()->create();
+    $project = Project::factory()->for($user)->create();
+    
+    $response = $this->actingAs($user, 'sanctum')
+        ->postJson('/api/time-entries', [
+            'project_id' => $project->id,
+            'description' => 'Working on feature',
+        ]);
+    
+    $response->assertStatus(201)
+        ->assertJsonStructure([
+            'data' => [
+                'id', 'project', 'start_time', 'end_time', 'duration',
+                'hourly_rate', 'amount', 'is_billable'
+            ]
+        ]);
+        
+    // Verify service was used correctly
+    $this->assertDatabaseHas('time_entries', [
+        'user_id' => $user->id,
+        'project_id' => $project->id,
+        'end_time' => null, // Timer is running
+    ]);
+}
+```
+
+### 4.8 API Documentation
+
+ - Tool: Laravel Scribe or L5-Swagger
+ - Auto-Generation: From routes, controllers, resources
+ - Interactive Docs: /api/documentation endpoint
+ - Postman Collection: Export for third-party developers
+ - Examples: Include cURL, JavaScript fetch, PHP
+
+### 4.9 API Versioning
+
+```
+routes/api.php
+├── v1/
+│   └── api.php    # Current stable API
+└── v2/
+    └── api.php    # Future breaking changes
+```
+
+URL Structure: `/api/v1/time-entries`
+
+### 4.10 Rate Limiting
+
+```php
+<?php
+// app/Providers/RouteServiceProvider.php
+RateLimiter::for('api', function (Request $request) {
+    return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+});
+```
+
+### 4.11 Error Handling
+
+```php
+<?php
+// app/Exceptions/Handler.php
+public function render($request, Throwable $exception)
+{
+    if ($request->is('api/*')) {
+        return response()->json([
+            'message' => $exception->getMessage(),
+            'errors' => $exception instanceof ValidationException 
+                ? $exception->errors() 
+                : null,
+        ], $this->getStatusCode($exception));
+    }
+    
+    return parent::render($request, $exception);
+}
+```
+
+### 4.12 Service Layer Benefits for API
+- ✅ Invoice Creation: Both web form and API POST use InvoiceService::createFromTimeEntries()
+- ✅ Rate Resolution: API responses include calculated rates via BillingService::resolveHourlyRate()
+- ✅ Timer Logic: Active timer constraint enforced in TimeEntryService for both interfaces
+- ✅ Analytics: Dashboard stats identical between web charts and API JSON via AnalyticsService
+- ✅ Testing: Service tests cover both web and API - no duplicate test code
+
+## Updated Timeline
+- Week 1: BillingService + tests
+- Week 2: TimeEntryService + InvoiceService + tests
+- Week 3: AnalyticsService + tests, refactor web controllers
+- Week 4: API controllers, resources, authentication setup
+- Week 5: API testing, documentation, versioning, deployment
+
+## Updated Success Metrics
+
+ - [ ] 100% test coverage for business logic (services + models)
+ - [ ] <50 lines per controller method (web + API)
+ - [ ] All rate calculations use BillingService
+ - [ ] Zero direct model manipulation in controllers (use services)
+ - [ ] Web and API controllers share 100% of business logic via services
+ - [ ] API test coverage matches web test coverage (96+ tests)
+ - [ ] Interactive API documentation available
+ - [ ] PHPStan level 5 compliance
+ - [ ] Test suite runs in <30 seconds
