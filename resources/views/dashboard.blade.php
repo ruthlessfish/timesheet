@@ -70,7 +70,9 @@
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold mb-4">Last 7 Days - Hours Tracked</h3>
-                        <canvas id="dailyHoursChart" width="400" height="200"></canvas>
+                        <div style="height: 300px;">
+                            <canvas id="dailyHoursChart"></canvas>
+                        </div>
                     </div>
                 </div>
 
@@ -78,7 +80,9 @@
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold mb-4">Top Projects by Hours</h3>
-                        <canvas id="projectHoursChart" width="400" height="200"></canvas>
+                        <div style="height: 300px;">
+                            <canvas id="projectHoursChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -88,7 +92,9 @@
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold mb-4">Billable vs Non-billable (This Month)</h3>
-                        <canvas id="billableChart" width="400" height="200"></canvas>
+                        <div style="height: 300px;">
+                            <canvas id="billableChart"></canvas>
+                        </div>
                     </div>
                 </div>
 
@@ -145,7 +151,8 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
+                aspectRatio: 2,
                 plugins: {
                     legend: {
                         display: false
@@ -173,7 +180,8 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
+                aspectRatio: 2,
                 plugins: {
                     legend: {
                         display: false
@@ -200,7 +208,8 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
+                aspectRatio: 2,
                 plugins: {
                     legend: {
                         position: 'bottom'
