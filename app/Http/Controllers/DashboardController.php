@@ -51,6 +51,13 @@ class DashboardController extends Controller
         $billableMinutes = $billableRatio['billable_minutes'];
         $nonBillableMinutes = $billableRatio['non_billable_minutes'];
         
+        // Get all user projects for timer dropdown
+        $userProjects = $user->projects()->with('client')->get();
+        $firstProject = $userProjects->first();
+        
+        // Generate API token for dashboard quick actions
+        $apiToken = $user->createToken('dashboard-quick-timer')->plainTextToken;
+        
         return view('dashboard', compact(
             'totalClients',
             'activeProjects',
@@ -61,7 +68,10 @@ class DashboardController extends Controller
             'last7Days',
             'projectHours',
             'billableMinutes',
-            'nonBillableMinutes'
+            'nonBillableMinutes',
+            'firstProject',
+            'userProjects',
+            'apiToken'
         ));
     }
 }

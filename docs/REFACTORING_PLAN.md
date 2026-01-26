@@ -110,7 +110,7 @@ app/Services/
 
 ## Phase 2: Implement Testing Strategy ✅ COMPLETE
 
-**Current Status**: 147 tests, 313 assertions, 100% passing
+**Current Status**: 169 tests, 520 assertions, 100% passing
 
 ### 2.1 Test Structure ✅
 ```
@@ -120,7 +120,12 @@ tests/
 │   ├── ClientTest.php     # ✅ Complete (8 tests) - CRUD, authorization
 │   ├── ProjectTest.php    # ✅ Complete (9 tests) - CRUD, authorization, relationships
 │   ├── TimeEntryTest.php  # ✅ Complete (14 tests) - Timer workflow, validation, filtering
-│   └── InvoiceTest.php    # ✅ Complete (14 tests) - Workflow, PDF, unbilled filtering
+│   ├── InvoiceTest.php    # ✅ Complete (14 tests) - Workflow, PDF, unbilled filtering
+│   └── Api/
+│       ├── AuthTest.php           # ✅ Complete (6 tests) - Registration, login, logout
+│       ├── TimeEntryApiTest.php   # ✅ Complete (7 tests) - API CRUD, timer endpoints
+│       ├── InvoiceApiTest.php     # ✅ Complete (5 tests) - API invoice operations
+│       └── RateLimitingTest.php   # ✅ Complete (4 tests) - Rate limit enforcement
 ├── Unit/
 │   ├── Models/
 │   │   ├── TimeEntryTest.php    # ✅ Complete (11 tests) - Rate cascade, duration, amount
@@ -383,10 +388,11 @@ $stats = $this->analyticsService->getDashboardStats(...);
 
 **Test Coverage** (tests/Feature/Api/):
 - ✅ `AuthTest` - 6 tests: registration, login, logout, profile, unauthorized
-- ✅ `TimeEntryApiTest` - 7 tests: CRUD, timer workflow, filtering, authorization  
+- ✅ `TimeEntryApiTest` - 7 tests: CRUD, timer workflow, filtering, authorization
 - ✅ `InvoiceApiTest` - 5 tests: creation, unbilled entries, authorization, deletion
+- ✅ `RateLimitingTest` - 4 tests: rate limits, per-user isolation, headers
 
-**Total**: 18 API tests, 76 assertions, 100% passing
+**Total**: 22 API tests, 131+ assertions, 100% passing
 
 **Verified Patterns**:
 - ✅ Sanctum authentication with token management
@@ -598,15 +604,55 @@ routes/api.php
 
 URL Structure: `/api/v1/time-entries`
 
-### 4.10 Rate Limiting
+### 4.10 Rate Limiting ✅ COMPLETE
 
+**Implemented** (app/Providers/AppServiceProvider.php):
+- ✅ API rate limiter: 60 requests per minute per authenticated user (or IP for guests)
+- ✅ Auth rate limiter: 5 requests per minute per IP (prevents brute force attacks)
+- ✅ Applied to all `/api/v1/*` routes via `throttle:api` middleware
+- ✅ Stricter `throttle:auth` middleware for login/register endpoints
+
+**Configuration**:
 ```php
-<?php
-// app/Providers/RouteServiceProvider.php
+// app/Providers/AppServiceProvider.php
 RateLimiter::for('api', function (Request $request) {
     return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
 });
+
+RateLimiter::for('auth', function (Request $request) {
+    return Limit::perMinute(5)->by($request->ip());
+});
 ```
+
+**Route Application**:
+```php
+// routes/api.php
+Route::prefix('v1')->name('api.v1.')->middleware('throttle:api')->group(function () {
+    // Auth endpoints with stricter limits
+    Route::middleware('throttle:auth')->group(function () {
+        Route::post('register', [Api\AuthController::class, 'register']);
+        Route::post('login', [Api\AuthController::class, 'login']);
+    });
+    
+    // Protected routes (authenticated requests limited by user ID)
+    Route::middleware('auth:sanctum')->group(function () {
+        // ... all API resources
+    });
+});
+```
+
+**Test Coverage** (tests/Feature/Api/RateLimitingTest.php):
+- ✅ 4 tests verifying rate limiting behavior
+- ✅ API endpoints return 429 after 60 requests
+- ✅ Auth endpoints return 429 after 5 requests
+- ✅ Rate limits are per-user (not shared across users)
+- ✅ Rate limit headers present in responses (X-RateLimit-Limit, X-RateLimit-Remaining)
+
+**Benefits**:
+- Prevents API abuse and DoS attacks
+- Protects authentication endpoints from brute force
+- Fair usage per user/IP address
+- Standard HTTP 429 responses with retry headers
 
 ### 4.11 Error Handling
 
@@ -650,13 +696,14 @@ public function render($request, Throwable $exception)
   - 6 API controllers using existing services
   - 5 JSON resources for transformations
   - Sanctum authentication setup
-  - 18 API tests validating all endpoints
+  - 22 API tests validating all endpoints
   - 33 API routes (public + protected)
+  - Rate limiting: 60/min general, 5/min auth endpoints
 
 **Final Test Suite**:
-- **165 tests**, **389 assertions**, **100% passing**
-- Runtime: **~2.18 seconds**
-- Coverage: Services (51), Models (26), Web Features (62), Auth (17), API (18), Examples (2)
+- **169 tests**, **520 assertions**, **100% passing**
+- Runtime: **~2.29 seconds**
+- Coverage: Services (51), Models (26), Web Features (62), Auth (17), API (22), Examples (2)
 
 **Project Status**: Production-ready full-stack application with web interface and REST API 🎉
 
@@ -670,14 +717,15 @@ public function render($request, Throwable $exception)
 - ✅ Zero direct model manipulation in controllers
 
 **Testing** ✅:
-- ✅ 165 tests, 389 assertions, 100% passing
-- ✅ Test suite runs in ~2 seconds
+- ✅ 169 tests, 520 assertions, 100% passing
+- ✅ Test suite runs in ~2.3 seconds
 - ✅ 100% coverage for critical business logic:
   - Rate cascade (4 levels tested)
   - Invoice workflow (creation, marking, PDF)
   - Active timer constraint (enforced)
   - Duration calculations (various scenarios)
   - Authorization policies (all resources)
+  - Rate limiting (API abuse prevention)
 
 **API** ✅:
 - ✅ Complete REST API with Sanctum authentication
@@ -695,8 +743,7 @@ public function render($request, Throwable $exception)
 
 **Future Enhancements** (Optional):
 - ⏳ Interactive API documentation (Scribe/Swagger)
-- ⏳ API versioning strategy (/api/v1, /api/v2)
-- ⏳ Rate limiting configuration
+- ⏳ Advanced rate limiting strategies (per-endpoint limits, burst allowances)
 - ⏳ PHPStan level 5+ compliance
 - ⏳ GraphQL API layer
 - ⏳ WebSocket support for real-time timers
@@ -719,11 +766,11 @@ public function render($request, Throwable $exception)
 |----------|-------|-----------|----------|
 | **Feature/Auth** | 17 | - | Authentication flows (Breeze) |
 | **Feature/Domain** | 45 | - | Web CRUD, authorization, workflows |
-| **Feature/API** | 18 | 76 | REST API endpoints, Sanctum auth |
+| **Feature/API** | 22 | 131+ | REST API endpoints, Sanctum auth, rate limiting |
 | **Unit/Models** | 26 | - | Attributes, relationships, calculations |
 | **Unit/Services** | 51 | - | Business logic, edge cases |
 | **Examples** | 2 | - | Basic smoke tests |
-| **Total** | **165** | **389** | **100% passing (~2s)** |
+| **Total** | **169** | **520** | **100% passing (~2.3s)** |
 
 ### Controller Refactoring Status
 | Controller | Service Dependencies | Status | Lines Reduced |

@@ -4,10 +4,12 @@ use App\Http\Controllers\Api;
 use Illuminate\Support\Facades\Route;
 
 // API Version 1
-Route::prefix('v1')->name('api.v1.')->group(function () {
-    // Public routes
-    Route::post('register', [Api\AuthController::class, 'register'])->name('register');
-    Route::post('login', [Api\AuthController::class, 'login'])->name('login');
+Route::prefix('v1')->name('api.v1.')->middleware('throttle:api')->group(function () {
+    // Public routes - stricter rate limiting for auth endpoints
+    Route::middleware('throttle:auth')->group(function () {
+        Route::post('register', [Api\AuthController::class, 'register'])->name('register');
+        Route::post('login', [Api\AuthController::class, 'login'])->name('login');
+    });
 
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {

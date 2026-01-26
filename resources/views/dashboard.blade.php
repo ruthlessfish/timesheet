@@ -4,12 +4,40 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Dashboard') }}
             </h2>
-            <a href="{{ route('time-entries.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Start Timer
-            </a>
+            @if($firstProject && !$activeTimer)
+                <div class="relative inline-flex" x-data="{ open: false }">
+                    <!-- Main Start Timer Button -->
+                    <button id="startTimerBtn" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-l-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span id="timerBtnText">Start Timer</span>
+                    </button>
+                    
+                    <!-- Dropdown Button -->
+                    <button @click="open = !open" @click.away="open = false" type="button" class="inline-flex items-center px-3 py-2 bg-gray-800 border border-l border-gray-700 rounded-r-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute right-0 top-full mt-2 w-64 bg-white rounded-md shadow-lg z-10 border border-gray-200" style="display: none;">
+                        <div class="py-1 max-h-64 overflow-y-auto">
+                            @foreach($userProjects as $project)
+                                <button onclick="startTimer({{ $project->id }})" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:bg-gray-100 transition">
+                                    <div class="font-medium">{{ $project->name }}</div>
+                                    <div class="text-xs text-gray-500">{{ $project->client->name }}</div>
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @elseif(!$firstProject && !$activeTimer)
+                <a href="{{ route('projects.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-l-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">>
+                    Create Project First
+                </a>
+            @endif
         </div>
     </x-slot>
 
@@ -65,7 +93,8 @@
                     </div>
                     <form action="{{ route('time-entries.stop', $activeTimer) }}" method="POST">
                         @csrf
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm">
+                        <a href="{{ route('time-entries.edit', $activeTimer) }}" class="text-indigo-500 hover:underline pr-2 text-lg font-bold">Edit</a>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                             Stop Timer
                         </button>
                     </form>
@@ -225,6 +254,56 @@
                 }
             }
         });
+
+        // Start Timer via API
+        @if($firstProject && !$activeTimer)
+        const startTimerBtn = document.getElementById('startTimerBtn');
+        const timerBtnText = document.getElementById('timerBtnText');
+        
+        // Function to start timer with a specific project
+        async function startTimer(projectId) {
+            // Disable button during request
+            startTimerBtn.disabled = true;
+            timerBtnText.textContent = 'Starting...';
+            
+            try {
+                const response = await fetch('/api/v1/time-entries', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': 'Bearer {{ $apiToken }}'
+                    },
+                    body: JSON.stringify({
+                        project_id: projectId,
+                        start_time: new Date().toISOString(),
+                        is_billable: true
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    // Reload page to show active timer
+                    window.location.reload();
+                } else {
+                    const errorData = await response.json();
+                    alert('Error starting timer: ' + (errorData.message || 'Unknown error'));
+                    startTimerBtn.disabled = false;
+                    timerBtnText.textContent = 'Start Timer';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to start timer. Please try again.');
+                startTimerBtn.disabled = false;
+                timerBtnText.textContent = 'Start Timer';
+            }
+        }
+        
+        // Main button uses first project
+        startTimerBtn.addEventListener('click', async function() {
+            await startTimer({{ $firstProject->id }});
+        });
+        @endif
     </script>
     @endpush
 </x-app-layout>
