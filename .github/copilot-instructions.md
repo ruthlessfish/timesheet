@@ -44,8 +44,18 @@ The `dev` script uses `concurrently` to manage Laravel server (8000), queue work
 - Always eager load relationships in index/show: `->with('project.client')`
 - Authorization via `$this->authorize('view', $model)` in show/edit/update/delete
 - Validation inline in controller methods (no FormRequest classes except Auth)
-- **Current Pattern**: Business logic in controllers (invoice creation, analytics queries)
-- **Planned Refactor**: Extract to service layer (see `REFACTORING_PLAN.md` for migration strategy)
+- **Service Layer**: Business logic extracted to services (see `docs/REFACTORING_PLAN.md`)
+  - Inject services via constructor dependency injection
+  - Controllers handle HTTP concerns only (validation, responses, redirects)
+  - Services handle business logic (calculations, workflows, data manipulation)
+
+**Services** (app/Services/):
+- **BillingService**: Rate resolution (4-level cascade), amount calculations, unbilled entry queries
+- **TimeEntryService**: Timer management, active timer constraint, duration calculations
+- **InvoiceService**: Invoice creation workflow, PDF generation, time entry marking/unmarking
+- **AnalyticsService**: Dashboard statistics, time series data, project breakdowns, revenue analysis
+- All services use dependency injection and delegate to each other (composition over duplication)
+- Services maintain critical business rules (rate cascade, invoice workflow, active timer constraint)
 
 **Models**:
 - All relationships explicitly typed: `BelongsTo`, `HasMany`
@@ -66,16 +76,26 @@ The `dev` script uses `concurrently` to manage Laravel server (8000), queue work
 
 ## Key Files & Patterns
 
-**Rate Calculation Examples**:
-- `app/Models/TimeEntry.php:52-56` - `getAmountAttribute()` with fallback chain
-- `app/Models/Project.php:47-54` - `getTotalAmountAttribute()` aggregates time entries
-- `app/Http/Controllers/InvoiceController.php:85-91` - Invoice item creation with rates
+**Service Layer Architecture**:
+- `app/Services/BillingService.php` - Core billing calculations, rate cascade implementation
+- `app/Services/TimeEntryService.php` - Timer workflows, active timer validation
+- `app/Services/InvoiceService.php` - Invoice creation, PDF generation, time entry marking
+- `app/Services/AnalyticsService.php` - Dashboard stats, charts, revenue analytics
+- See `docs/REFACTORING_PLAN.md` for full service documentation and architecture
 
-**Dashboard Analytics**: `app/Http/Controllers/DashboardController.php` demonstrates:
-- Carbon date range queries for monthly stats
-- Aggregations with `sum('duration')` converted to hours
-- Chart data structures for last 7 days and top 5 projects
-- Billable vs non-billable comparisons
+**Rate Calculation Examples**:
+- `app/Services/BillingService.php:resolveHourlyRate()` - 4-level cascade: entry → project → client → 0
+- `app/Services/BillingService.php:calculateAmount()` - Duration (minutes) → hours * rate
+- `app/Models/TimeEntry.php:52-56` - `getAmountAttribute()` delegates to service (legacy)
+- `app/Models/Project.php:47-54` - `getTotalAmountAttribute()` aggregates time entries
+
+**Dashboard Analytics**: 
+- `app/Services/AnalyticsService.php` - All dashboard calculations extracted to service
+- `getDashboardStats()` - Clients, projects, monthly hours, monthly revenue
+- `getDailyHoursTimeSeries()` - Last N days data for line chart
+- `getProjectHoursBreakdown()` - Top N projects by hours for bar chart
+- `getBillableRatio()` - Billable vs non-billable breakdown for doughnut chart
+- Legacy: `app/Http/Controllers/DashboardController.php` (being refactored to use service)
 
 **PDF Generation**: 
 - Uses `barryvdh/laravel-dompdf`
@@ -97,29 +117,45 @@ The `dev` script uses `concurrently` to manage Laravel server (8000), queue work
 
 ## Testing Strategy
 
+**Current Status**: 147 tests, 313 assertions, 100% passing (see `docs/TEST_SUMMARY.md`)
+
 **Test Structure**:
 ```
-tests/Feature/     # HTTP, authorization, workflows
-tests/Unit/        # Models, services, business logic
+tests/Feature/     # HTTP, authorization, workflows (62 tests)
+tests/Unit/        # Models (26 tests), Services (51 tests)
 ```
 
 **Conventions**:
 - Use `RefreshDatabase` trait for all database-touching tests
-- Factories needed: Client, Project, TimeEntry, Invoice (see `REFACTORING_PLAN.md`)
+- Factories: Client, Project, TimeEntry, Invoice all implemented
 - Test authorization with multiple users via policies
-- Critical test cases: rate cascade, active timer constraint, invoice workflow, unbilled entry filtering
+- Service tests cover all business logic in isolation
+- Feature tests verify HTTP layer and integration
 
-**Priority Tests** (not yet implemented):
-1. Active timer constraint (only one per user)
-2. Rate cascade resolution (TimeEntry → Project → Client → 0)
-3. Invoice workflow (marks entries as invoiced, prevents double-billing)
-4. Auto-generated invoice numbers (INV-YYYY-0001 format)
+**Critical Test Coverage** ✅:
+1. ✅ Active timer constraint (TimeEntryServiceTest)
+2. ✅ Rate cascade resolution - all 4 levels (BillingServiceTest)
+3. ✅ Invoice workflow - marks entries as invoiced (InvoiceServiceTest)
+4. ✅ Auto-generated invoice numbers INV-YYYY-0001 (InvoiceTest)
+5. ✅ Unbilled entry filtering (BillingServiceTest, InvoiceTest)
+
+**Service Tests** (51 tests):
+- `BillingServiceTest.php` - 10 tests: rate cascade, calculations, unbilled queries
+- `TimeEntryServiceTest.php` - 15 tests: timer workflows, active constraint, filtering
+- `InvoiceServiceTest.php` - 13 tests: invoice creation, PDF, marking/unmarking
+- `AnalyticsServiceTest.php` - 13 tests: dashboard stats, charts, revenue analysis
 
 **Running Tests**:
 ```bash
 composer run test    # Clears config cache, runs PHPUnit
 php artisan test     # Direct PHPUnit execution
+php artisan test --filter=ServiceName  # Run specific test class
 ```
+
+**Documentation**:
+- Full test documentation: `docs/TEST_SUMMARY.md`
+- Refactoring plan: `docs/REFACTORING_PLAN.md`
+- API authentication guide: `docs/API_AUTHENTICATION.md`
 
 ## Common Tasks
 
