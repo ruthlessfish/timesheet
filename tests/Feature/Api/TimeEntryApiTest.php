@@ -23,7 +23,7 @@ class TimeEntryApiTest extends TestCase
         $this->token = $this->user->createToken('test-token')->plainTextToken;
     }
 
-    /** @test */
+    #[Test]
     public function user_can_list_their_time_entries_via_api()
     {
         $timeEntry = TimeEntry::factory()->create(['user_id' => $this->user->id]);
@@ -48,7 +48,7 @@ class TimeEntryApiTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_create_time_entry_via_api()
     {
         $project = Project::factory()->create(['user_id' => $this->user->id]);
@@ -73,7 +73,7 @@ class TimeEntryApiTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_get_active_timer_via_api()
     {
         $activeTimer = TimeEntry::factory()->running()->create(['user_id' => $this->user->id]);
@@ -89,7 +89,7 @@ class TimeEntryApiTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function returns_404_when_no_active_timer_via_api()
     {
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
@@ -98,7 +98,7 @@ class TimeEntryApiTest extends TestCase
         $response->assertStatus(404);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_stop_timer_via_api()
     {
         $activeTimer = TimeEntry::factory()->running()->create(['user_id' => $this->user->id]);
@@ -118,7 +118,7 @@ class TimeEntryApiTest extends TestCase
         $this->assertNotNull($activeTimer->fresh()->end_time);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_access_other_users_time_entries()
     {
         $otherUser = User::factory()->create();
@@ -130,7 +130,7 @@ class TimeEntryApiTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_filter_time_entries_by_project()
     {
         $project1 = Project::factory()->create(['user_id' => $this->user->id]);

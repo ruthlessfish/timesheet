@@ -25,7 +25,7 @@ class InvoiceApiTest extends TestCase
         $this->token = $this->user->createToken('test-token')->plainTextToken;
     }
 
-    /** @test */
+    #[Test]
     public function user_can_list_their_invoices_via_api()
     {
         Invoice::factory()->create(['user_id' => $this->user->id]);
@@ -51,7 +51,7 @@ class InvoiceApiTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_create_invoice_from_time_entries_via_api()
     {
         $client = Client::factory()->create(['user_id' => $this->user->id]);
@@ -89,7 +89,7 @@ class InvoiceApiTest extends TestCase
         $this->assertTrue($timeEntry->fresh()->is_invoiced);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_get_unbilled_entries_for_client_via_api()
     {
         $client = Client::factory()->create(['user_id' => $this->user->id]);
@@ -120,7 +120,7 @@ class InvoiceApiTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_access_other_users_invoices()
     {
         $otherUser = User::factory()->create();
@@ -132,7 +132,7 @@ class InvoiceApiTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_delete_invoice_via_api()
     {
         $client = Client::factory()->create(['user_id' => $this->user->id]);

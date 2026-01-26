@@ -12,7 +12,7 @@ class TimeEntryTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function it_calculates_duration_in_minutes()
     {
         $timeEntry = TimeEntry::factory()->make([
@@ -26,7 +26,7 @@ class TimeEntryTest extends TestCase
         $this->assertEquals(120, $timeEntry->duration);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_calculate_duration_without_end_time()
     {
         $timeEntry = TimeEntry::factory()->make([
@@ -40,7 +40,7 @@ class TimeEntryTest extends TestCase
         $this->assertNull($timeEntry->duration);
     }
 
-    /** @test */
+    #[Test]
     public function stop_method_sets_end_time_and_calculates_duration()
     {
         $timeEntry = TimeEntry::factory()->create([
@@ -56,7 +56,7 @@ class TimeEntryTest extends TestCase
         $this->assertGreaterThan(0, $timeEntry->duration);
     }
 
-    /** @test */
+    #[Test]
     public function amount_uses_time_entry_hourly_rate_when_set()
     {
         $client = Client::factory()->create(['hourly_rate' => 100]);
@@ -75,7 +75,7 @@ class TimeEntryTest extends TestCase
         $this->assertEquals(400.00, $timeEntry->amount);
     }
 
-    /** @test */
+    #[Test]
     public function amount_cascades_to_project_rate_when_entry_rate_is_null()
     {
         $client = Client::factory()->create(['hourly_rate' => 100]);
@@ -94,7 +94,7 @@ class TimeEntryTest extends TestCase
         $this->assertEquals(300.00, $timeEntry->amount);
     }
 
-    /** @test */
+    #[Test]
     public function amount_cascades_to_client_rate_when_project_and_entry_rates_are_null()
     {
         $client = Client::factory()->create(['hourly_rate' => 100]);
@@ -113,7 +113,7 @@ class TimeEntryTest extends TestCase
         $this->assertEquals(200.00, $timeEntry->amount);
     }
 
-    /** @test */
+    #[Test]
     public function amount_defaults_to_zero_when_all_rates_are_null()
     {
         $client = Client::factory()->withoutRate()->create();
@@ -131,7 +131,7 @@ class TimeEntryTest extends TestCase
         $this->assertEquals(0.00, $timeEntry->amount);
     }
 
-    /** @test */
+    #[Test]
     public function amount_is_calculated_correctly_for_fractional_hours()
     {
         $timeEntry = TimeEntry::factory()->create([
@@ -142,7 +142,7 @@ class TimeEntryTest extends TestCase
         $this->assertEquals(150.00, $timeEntry->amount);
     }
 
-    /** @test */
+    #[Test]
     public function it_belongs_to_a_project()
     {
         $timeEntry = TimeEntry::factory()->create();
@@ -150,7 +150,7 @@ class TimeEntryTest extends TestCase
         $this->assertInstanceOf(Project::class, $timeEntry->project);
     }
 
-    /** @test */
+    #[Test]
     public function it_casts_dates_correctly()
     {
         $timeEntry = TimeEntry::factory()->create();
@@ -159,7 +159,7 @@ class TimeEntryTest extends TestCase
         $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $timeEntry->end_time);
     }
 
-    /** @test */
+    #[Test]
     public function it_casts_booleans_correctly()
     {
         $timeEntry = TimeEntry::factory()->create([

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use App\Models\Project;
 use App\Models\TimeEntry;
 use App\Models\User;
@@ -12,7 +14,7 @@ class TimeEntryTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function user_can_view_their_time_entries()
     {
         $user = User::factory()->create();
@@ -24,7 +26,7 @@ class TimeEntryTest extends TestCase
         $response->assertSee($timeEntry->project->name);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_view_other_users_time_entries()
     {
         $user = User::factory()->create();
@@ -36,7 +38,7 @@ class TimeEntryTest extends TestCase
         $response->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function user_can_create_manual_time_entry()
     {
         $user = User::factory()->create();
@@ -59,7 +61,7 @@ class TimeEntryTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function duration_is_calculated_when_creating_manual_entry()
     {
         $user = User::factory()->create();
@@ -80,7 +82,7 @@ class TimeEntryTest extends TestCase
         $this->assertEquals(120, $timeEntry->duration);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_start_a_timer()
     {
         $user = User::factory()->create();
@@ -101,7 +103,7 @@ class TimeEntryTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_stop_a_running_timer()
     {
         $user = User::factory()->create();
@@ -115,7 +117,7 @@ class TimeEntryTest extends TestCase
         $this->assertNotNull($timeEntry->duration);
     }
 
-    /** @test */
+    #[Test]
     public function active_timer_is_displayed_on_index_page()
     {
         $user = User::factory()->create();
@@ -127,7 +129,7 @@ class TimeEntryTest extends TestCase
         $response->assertSee($activeTimer->project->name);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_update_their_time_entry()
     {
         $user = User::factory()->create();
@@ -148,7 +150,7 @@ class TimeEntryTest extends TestCase
         $this->assertFalse($timeEntry->is_billable);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_update_other_users_time_entry()
     {
         $user = User::factory()->create();
@@ -165,7 +167,7 @@ class TimeEntryTest extends TestCase
         $response->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function user_can_delete_their_time_entry()
     {
         $user = User::factory()->create();
@@ -177,7 +179,7 @@ class TimeEntryTest extends TestCase
         $this->assertDatabaseMissing('time_entries', ['id' => $timeEntry->id]);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_delete_other_users_time_entry()
     {
         $user = User::factory()->create();
@@ -190,7 +192,7 @@ class TimeEntryTest extends TestCase
         $this->assertDatabaseHas('time_entries', ['id' => $otherTimeEntry->id]);
     }
 
-    /** @test */
+    #[Test]
     public function time_entries_can_be_filtered_by_project()
     {
         $user = User::factory()->create();
@@ -207,7 +209,7 @@ class TimeEntryTest extends TestCase
         // Project2 entries should not be visible when filtered
     }
 
-    /** @test */
+    #[Test]
     public function validation_requires_project_id()
     {
         $user = User::factory()->create();
@@ -219,7 +221,7 @@ class TimeEntryTest extends TestCase
         $response->assertSessionHasErrors('project_id');
     }
 
-    /** @test */
+    #[Test]
     public function validation_requires_end_time_after_start_time()
     {
         $user = User::factory()->create();

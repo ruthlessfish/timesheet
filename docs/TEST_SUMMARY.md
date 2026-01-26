@@ -220,6 +220,6 @@ Per `REFACTORING_PLAN.md`, future testing will include:
 
 ## Notes
 
-- Tests use PHPUnit 11.x (deprecation warnings for `/** @test */` annotation - consider migrating to attributes in future)
+- Tests use PHPUnit 11.x (deprecation warnings for `#[Test]` annotation - consider migrating to attributes in future)
 - All critical priority tests from REFACTORING_PLAN.md implemented ✅
 - Dashboard analytics not yet tested (charts, aggregations)

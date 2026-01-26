@@ -12,7 +12,7 @@ class InvoiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function it_auto_generates_invoice_number_on_creation()
     {
         $invoice = Invoice::factory()->create();
@@ -21,7 +21,7 @@ class InvoiceTest extends TestCase
         $this->assertStringStartsWith('INV-' . date('Y') . '-', $invoice->invoice_number);
     }
 
-    /** @test */
+    #[Test]
     public function invoice_numbers_are_sequential_within_year()
     {
         $invoice1 = Invoice::factory()->create();
@@ -31,7 +31,7 @@ class InvoiceTest extends TestCase
         $this->assertEquals('INV-' . date('Y') . '-0002', $invoice2->invoice_number);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_override_manually_set_invoice_number()
     {
         $invoice = Invoice::factory()->create([
@@ -41,7 +41,7 @@ class InvoiceTest extends TestCase
         $this->assertEquals('CUSTOM-001', $invoice->invoice_number);
     }
 
-    /** @test */
+    #[Test]
     public function calculate_totals_sums_invoice_items()
     {
         $invoice = Invoice::factory()->create([
@@ -76,7 +76,7 @@ class InvoiceTest extends TestCase
         $this->assertEquals(250.00, $invoice->total);
     }
 
-    /** @test */
+    #[Test]
     public function calculate_totals_applies_tax_correctly()
     {
         $invoice = Invoice::factory()->create([
@@ -104,7 +104,7 @@ class InvoiceTest extends TestCase
         $this->assertEquals(110.00, $invoice->total);
     }
 
-    /** @test */
+    #[Test]
     public function it_belongs_to_a_client()
     {
         $invoice = Invoice::factory()->create();
@@ -112,7 +112,7 @@ class InvoiceTest extends TestCase
         $this->assertInstanceOf(Client::class, $invoice->client);
     }
 
-    /** @test */
+    #[Test]
     public function it_has_many_items()
     {
         $invoice = Invoice::factory()->create();
@@ -123,7 +123,7 @@ class InvoiceTest extends TestCase
         $this->assertCount(3, $invoice->items);
     }
 
-    /** @test */
+    #[Test]
     public function it_casts_dates_correctly()
     {
         $invoice = Invoice::factory()->create();
@@ -132,7 +132,7 @@ class InvoiceTest extends TestCase
         $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $invoice->due_date);
     }
 
-    /** @test */
+    #[Test]
     public function it_casts_decimals_correctly()
     {
         $invoice = Invoice::factory()->create([

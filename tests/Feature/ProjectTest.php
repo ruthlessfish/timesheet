@@ -12,7 +12,7 @@ class ProjectTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function user_can_view_their_projects()
     {
         $user = User::factory()->create();
@@ -24,7 +24,7 @@ class ProjectTest extends TestCase
         $response->assertSee($project->name);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_view_other_users_project()
     {
         $user = User::factory()->create();
@@ -36,7 +36,7 @@ class ProjectTest extends TestCase
         $response->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function user_can_create_project()
     {
         $user = User::factory()->create();
@@ -61,7 +61,7 @@ class ProjectTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_update_their_project()
     {
         $user = User::factory()->create();
@@ -82,7 +82,7 @@ class ProjectTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_update_other_users_project()
     {
         $user = User::factory()->create();
@@ -97,7 +97,7 @@ class ProjectTest extends TestCase
         $response->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function user_can_delete_their_project()
     {
         $user = User::factory()->create();
@@ -109,7 +109,7 @@ class ProjectTest extends TestCase
         $this->assertDatabaseMissing('projects', ['id' => $project->id]);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_delete_other_users_project()
     {
         $user = User::factory()->create();
@@ -122,7 +122,7 @@ class ProjectTest extends TestCase
         $this->assertDatabaseHas('projects', ['id' => $otherProject->id]);
     }
 
-    /** @test */
+    #[Test]
     public function validation_requires_project_name_and_client()
     {
         $user = User::factory()->create();
@@ -134,7 +134,7 @@ class ProjectTest extends TestCase
         $response->assertSessionHasErrors(['name', 'client_id']);
     }
 
-    /** @test */
+    #[Test]
     public function project_displays_client_relationship()
     {
         $user = User::factory()->create();

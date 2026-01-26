@@ -13,7 +13,7 @@ class ProjectTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function total_hours_sums_all_time_entry_durations()
     {
         $project = Project::factory()->create();
@@ -32,7 +32,7 @@ class ProjectTest extends TestCase
         $this->assertEquals(3.5, $project->total_hours);
     }
 
-    /** @test */
+    #[Test]
     public function total_amount_only_includes_billable_entries()
     {
         $project = Project::factory()->create(['hourly_rate' => 100]);
@@ -52,7 +52,7 @@ class ProjectTest extends TestCase
         $this->assertEquals(200.00, $project->total_amount);
     }
 
-    /** @test */
+    #[Test]
     public function total_amount_respects_rate_cascade()
     {
         $client = Client::factory()->create(['hourly_rate' => 100]);
@@ -84,7 +84,7 @@ class ProjectTest extends TestCase
         $this->assertEquals(350.00, $project->total_amount);
     }
 
-    /** @test */
+    #[Test]
     public function it_belongs_to_a_client()
     {
         $project = Project::factory()->create();
@@ -92,7 +92,7 @@ class ProjectTest extends TestCase
         $this->assertInstanceOf(Client::class, $project->client);
     }
 
-    /** @test */
+    #[Test]
     public function it_has_many_time_entries()
     {
         $project = Project::factory()->create();
@@ -104,7 +104,7 @@ class ProjectTest extends TestCase
         $this->assertCount(5, $project->timeEntries);
     }
 
-    /** @test */
+    #[Test]
     public function it_casts_dates_correctly()
     {
         $project = Project::factory()->create([

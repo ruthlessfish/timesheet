@@ -14,7 +14,7 @@ class InvoiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function user_can_view_their_invoices()
     {
         $user = User::factory()->create();
@@ -26,7 +26,7 @@ class InvoiceTest extends TestCase
         $response->assertSee($invoice->invoice_number);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_view_other_users_invoices()
     {
         $user = User::factory()->create();
@@ -38,7 +38,7 @@ class InvoiceTest extends TestCase
         $response->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function user_can_create_invoice_from_unbilled_time_entries()
     {
         $user = User::factory()->create();
@@ -77,7 +77,7 @@ class InvoiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function creating_invoice_marks_time_entries_as_invoiced()
     {
         $user = User::factory()->create();
@@ -107,7 +107,7 @@ class InvoiceTest extends TestCase
         $this->assertTrue($timeEntry->is_invoiced);
     }
 
-    /** @test */
+    #[Test]
     public function only_unbilled_entries_are_available_for_invoicing()
     {
         $user = User::factory()->create();
@@ -139,7 +139,7 @@ class InvoiceTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function non_billable_entries_are_not_available_for_invoicing()
     {
         $user = User::factory()->create();
@@ -169,7 +169,7 @@ class InvoiceTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function running_timers_are_not_available_for_invoicing()
     {
         $user = User::factory()->create();
@@ -200,7 +200,7 @@ class InvoiceTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function invoice_totals_are_calculated_on_creation()
     {
         $user = User::factory()->create();
@@ -238,7 +238,7 @@ class InvoiceTest extends TestCase
         $this->assertEquals(220.00, $invoice->total);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_update_invoice()
     {
         $user = User::factory()->create();
@@ -259,7 +259,7 @@ class InvoiceTest extends TestCase
         $this->assertEquals('Updated notes', $invoice->notes);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_update_other_users_invoice()
     {
         $user = User::factory()->create();
@@ -276,7 +276,7 @@ class InvoiceTest extends TestCase
         $response->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function deleting_invoice_unmarks_time_entries()
     {
         $user = User::factory()->create();
@@ -310,7 +310,7 @@ class InvoiceTest extends TestCase
         $this->assertFalse($timeEntry->is_invoiced);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_generate_pdf_for_their_invoice()
     {
         $user = User::factory()->create();
@@ -322,7 +322,7 @@ class InvoiceTest extends TestCase
         $response->assertHeader('Content-Type', 'application/pdf');
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_generate_pdf_for_other_users_invoice()
     {
         $user = User::factory()->create();
@@ -334,7 +334,7 @@ class InvoiceTest extends TestCase
         $response->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function validation_requires_due_date_after_issue_date()
     {
         $user = User::factory()->create();

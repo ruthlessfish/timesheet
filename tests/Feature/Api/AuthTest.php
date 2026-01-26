@@ -10,7 +10,7 @@ class AuthTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function user_can_register_via_api()
     {
         $response = $this->postJson('/api/v1/register', [
@@ -31,7 +31,7 @@ class AuthTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_login_via_api()
     {
         $user = User::factory()->create([
@@ -51,7 +51,7 @@ class AuthTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_login_with_incorrect_password()
     {
         $user = User::factory()->create([
@@ -67,7 +67,7 @@ class AuthTest extends TestCase
         $response->assertStatus(422);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_logout_via_api()
     {
         $user = User::factory()->create();
@@ -82,7 +82,7 @@ class AuthTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_get_their_profile_via_api()
     {
         $user = User::factory()->create();
@@ -98,7 +98,7 @@ class AuthTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function unauthenticated_user_cannot_access_protected_routes()
     {
         $response = $this->getJson('/api/v1/user');

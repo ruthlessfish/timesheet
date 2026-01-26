@@ -11,7 +11,7 @@ class ClientTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function user_can_view_their_clients()
     {
         $user = User::factory()->create();
@@ -23,7 +23,7 @@ class ClientTest extends TestCase
         $response->assertSee($client->name);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_view_other_users_client()
     {
         $user = User::factory()->create();
@@ -35,7 +35,7 @@ class ClientTest extends TestCase
         $response->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function user_can_create_client()
     {
         $user = User::factory()->create();
@@ -59,7 +59,7 @@ class ClientTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_update_their_client()
     {
         $user = User::factory()->create();
@@ -80,7 +80,7 @@ class ClientTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_update_other_users_client()
     {
         $user = User::factory()->create();
@@ -95,7 +95,7 @@ class ClientTest extends TestCase
         $response->assertForbidden();
     }
 
-    /** @test */
+    #[Test]
     public function user_can_delete_their_client()
     {
         $user = User::factory()->create();
@@ -107,7 +107,7 @@ class ClientTest extends TestCase
         $this->assertDatabaseMissing('clients', ['id' => $client->id]);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_delete_other_users_client()
     {
         $user = User::factory()->create();
@@ -120,7 +120,7 @@ class ClientTest extends TestCase
         $this->assertDatabaseHas('clients', ['id' => $otherClient->id]);
     }
 
-    /** @test */
+    #[Test]
     public function validation_requires_client_name()
     {
         $user = User::factory()->create();
