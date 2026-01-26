@@ -1,5 +1,17 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" 
+      class="{{ auth()->user()?->theme_preference === 'dark' ? 'dark' : '' }}"
+      x-data="{ 
+          darkMode: {{ auth()->user()?->theme_preference === 'dark' ? 'true' : 'false' }},
+          toggleDark() {
+              this.darkMode = !this.darkMode;
+              if (this.darkMode) {
+                  document.documentElement.classList.add('dark');
+              } else {
+                  document.documentElement.classList.remove('dark');
+              }
+          }
+      }">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,7 +26,7 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased bg-gray-100">
+    <body class="font-sans antialiased bg-gray-100 dark:bg-gray-900">
         @include('layouts.navigation')
 
         <!-- Main Content Area -->

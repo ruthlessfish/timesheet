@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 {{ __('Dashboard') }}
             </h2>
             @if($firstProject && !$activeTimer)
@@ -22,12 +22,12 @@
                     </button>
                     
                     <!-- Dropdown Menu -->
-                    <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute right-0 top-full mt-2 w-64 bg-white rounded-md shadow-lg z-10 border border-gray-200" style="display: none;">
+                    <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700" style="display: none;">
                         <div class="py-1 max-h-64 overflow-y-auto">
                             @foreach($userProjects as $project)
-                                <button onclick="startTimer({{ $project->id }})" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:bg-gray-100 transition">
+                                <button onclick="startTimer({{ $project->id }})" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:bg-gray-100 dark:focus:bg-gray-700 transition">
                                     <div class="font-medium">{{ $project->name }}</div>
-                                    <div class="text-xs text-gray-500">{{ $project->client->name }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ $project->client->name }}</div>
                                 </button>
                             @endforeach
                         </div>
@@ -45,47 +45,47 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Statistics Cards -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="text-gray-500 text-sm">Active Clients</div>
-                        <div class="text-3xl font-bold text-gray-900">{{ $totalClients }}</div>
+                        <div class="text-gray-500 dark:text-gray-400 text-sm">Active Clients</div>
+                        <div class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $totalClients }}</div>
                     </div>
                 </div>
                 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="text-gray-500 text-sm">Active Projects</div>
-                        <div class="text-3xl font-bold text-gray-900">{{ $activeProjects }}</div>
+                        <div class="text-gray-500 dark:text-gray-400 text-sm">Active Projects</div>
+                        <div class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ $activeProjects }}</div>
                     </div>
                 </div>
                 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="text-gray-500 text-sm">Hours This Month</div>
-                        <div class="text-3xl font-bold text-gray-900">{{ number_format($monthlyHours, 1) }}</div>
+                        <div class="text-gray-500 dark:text-gray-400 text-sm">Hours This Month</div>
+                        <div class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ number_format($monthlyHours, 1) }}</div>
                     </div>
                 </div>
                 
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <div class="text-gray-500 text-sm">Revenue This Month</div>
-                        <div class="text-3xl font-bold text-green-600">${{ number_format($monthlyRevenue, 2) }}</div>
+                        <div class="text-gray-500 dark:text-gray-400 text-sm">Revenue This Month</div>
+                        <div class="text-3xl font-bold text-green-600 dark:text-green-400">${{ number_format($monthlyRevenue, 2) }}</div>
                     </div>
                 </div>
             </div>
 
             <!-- Active Timer Alert -->
             @if($activeTimer)
-            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+            <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 dark:border-blue-500 p-4 mb-6">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <svg class="h-5 w-5 text-blue-400 dark:text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
                             </svg>
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm text-blue-700">
+                            <p class="text-sm text-blue-700 dark:text-blue-300">
                                 <strong>Timer Running:</strong> {{ $activeTimer->project->client->name }} - {{ $activeTimer->project->name }}
                                 <span class="text-xs ml-2">Started {{ $activeTimer->start_time->diffForHumans() }}</span>
                             </p>
@@ -93,8 +93,8 @@
                     </div>
                     <form action="{{ route('time-entries.stop', $activeTimer) }}" method="POST">
                         @csrf
-                        <a href="{{ route('time-entries.edit', $activeTimer) }}" class="text-indigo-500 hover:underline pr-2 text-lg font-bold">Edit</a>
-                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                        <a href="{{ route('time-entries.edit', $activeTimer) }}" class="text-indigo-500 dark:text-indigo-400 hover:underline pr-2 text-lg font-bold">Edit</a>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-700 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-gray-600 focus:bg-gray-700 dark:focus:bg-gray-600 active:bg-gray-900 dark:active:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
                             Stop Timer
                         </button>
                     </form>
@@ -104,9 +104,9 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <!-- Daily Hours Chart -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold mb-4">Last 7 Days - Hours Tracked</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Last 7 Days - Hours Tracked</h3>
                         <div style="height: 300px;">
                             <canvas id="dailyHoursChart"></canvas>
                         </div>
@@ -114,9 +114,9 @@
                 </div>
 
                 <!-- Project Hours Chart -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold mb-4">Top Projects by Hours</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Top Projects by Hours</h3>
                         <div style="height: 300px;">
                             <canvas id="projectHoursChart"></canvas>
                         </div>
@@ -126,9 +126,9 @@
 
             <!-- Billable vs Non-billable -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
-                        <h3 class="text-lg font-semibold mb-4">Billable vs Non-billable (This Month)</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Billable vs Non-billable (This Month)</h3>
                         <div style="height: 300px;">
                             <canvas id="billableChart"></canvas>
                         </div>
@@ -136,30 +136,30 @@
                 </div>
 
                 <!-- Recent Time Entries -->
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold">Recent Time Entries</h3>
-                            <a href="{{ route('time-entries.index') }}" class="text-blue-600 hover:text-blue-800 text-sm">View All</a>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Time Entries</h3>
+                            <a href="{{ route('time-entries.index') }}" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm">View All</a>
                         </div>
                         <div class="space-y-3">
                             @forelse($recentTimeEntries as $entry)
-                            <div class="border-b pb-2">
+                            <div class="border-b border-gray-200 dark:border-gray-700 pb-2">
                                 <div class="flex justify-between">
-                                    <div class="text-sm font-medium text-gray-900">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                         {{ $entry->project->client->name }} - {{ $entry->project->name }}
                                     </div>
-                                    <div class="text-sm text-gray-500">
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">
                                         {{ number_format($entry->duration / 60, 2) }}h
                                     </div>
                                 </div>
                                 @if($entry->description)
-                                <div class="text-xs text-gray-600 mt-1">{{ Str::limit($entry->description, 50) }}</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">{{ Str::limit($entry->description, 50) }}</div>
                                 @endif
-                                <div class="text-xs text-gray-400 mt-1">{{ $entry->start_time->format('M d, Y') }}</div>
+                                <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ $entry->start_time->format('M d, Y') }}</div>
                             </div>
                             @empty
-                            <p class="text-gray-500 text-sm">No time entries yet.</p>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm">No time entries yet.</p>
                             @endforelse
                         </div>
                     </div>
@@ -171,6 +171,11 @@
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // Detect dark mode
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#e5e7eb' : '#374151';
+        const gridColor = isDark ? '#374151' : '#e5e7eb';
+        
         // Daily Hours Chart
         const dailyHoursCtx = document.getElementById('dailyHoursChart').getContext('2d');
         new Chart(dailyHoursCtx, {
@@ -197,7 +202,13 @@
                 },
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
+                    },
+                    x: {
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
                     }
                 }
             }
@@ -226,7 +237,13 @@
                 },
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
+                    },
+                    x: {
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
                     }
                 }
             }
@@ -248,6 +265,9 @@
                 maintainAspectRatio: true,
                 aspectRatio: 2,
                 plugins: {
+                    legend: {
+                        labels: { color: textColor }
+                    },
                     legend: {
                         position: 'bottom'
                     }
