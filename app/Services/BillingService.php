@@ -6,10 +6,16 @@ use App\Models\Client;
 use App\Models\TimeEntry;
 use Illuminate\Support\Collection;
 
+/**
+ * Service for handling billing logic
+ */
 class BillingService
 {
     /**
      * Resolve hourly rate using cascade: entry → project → client → 0
+     * 
+     * @param TimeEntry $timeEntry
+     * @return float    
      */
     public function resolveHourlyRate(TimeEntry $timeEntry): float
     {
@@ -24,6 +30,9 @@ class BillingService
 
     /**
      * Calculate amount for a time entry
+     * 
+     *  @param TimeEntry $timeEntry
+     *  @return float
      */
     public function calculateAmount(TimeEntry $timeEntry): float
     {
@@ -35,6 +44,10 @@ class BillingService
 
     /**
      * Get unbilled time entries for a client
+     * 
+     * @param int $clientId
+     * @param int $userId
+     * @return Collection<TimeEntry>
      */
     public function getUnbilledTimeEntries(int $clientId, int $userId): Collection
     {
@@ -52,6 +65,9 @@ class BillingService
 
     /**
      * Calculate total amount for a collection of time entries
+     * 
+     * @param Collection<TimeEntry> $timeEntries
+     * @return float
      */
     public function calculateTotalAmount(Collection $timeEntries): float
     {
@@ -62,6 +78,9 @@ class BillingService
 
     /**
      * Calculate total hours for a collection of time entries
+     * 
+     * @param Collection<TimeEntry> $timeEntries
+     * @return float
      */
     public function calculateTotalHours(Collection $timeEntries): float
     {
@@ -70,6 +89,8 @@ class BillingService
 
     /**
      * Mark time entries as invoiced
+     * 
+     * @param Collection<TimeEntry> $timeEntries
      */
     public function markAsInvoiced(Collection $timeEntries): void
     {
@@ -79,6 +100,8 @@ class BillingService
 
     /**
      * Mark time entries as not invoiced
+     * 
+     * @param Collection<TimeEntry> $timeEntries
      */
     public function markAsNotInvoiced(Collection $timeEntries): void
     {
