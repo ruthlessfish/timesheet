@@ -13,7 +13,7 @@ class AuthTest extends TestCase
     /** @test */
     public function user_can_register_via_api()
     {
-        $response = $this->postJson('/api/register', [
+        $response = $this->postJson('/api/v1/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'password123',
@@ -39,7 +39,7 @@ class AuthTest extends TestCase
             'password' => bcrypt('password123'),
         ]);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/v1/login', [
             'email' => 'test@example.com',
             'password' => 'password123',
         ]);
@@ -59,7 +59,7 @@ class AuthTest extends TestCase
             'password' => bcrypt('password123'),
         ]);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/v1/login', [
             'email' => 'test@example.com',
             'password' => 'wrong-password',
         ]);
@@ -74,7 +74,7 @@ class AuthTest extends TestCase
         $token = $user->createToken('test-token')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->postJson('/api/logout');
+            ->postJson('/api/v1/logout');
 
         $response->assertOk();
         $response->assertJson([
@@ -89,7 +89,7 @@ class AuthTest extends TestCase
         $token = $user->createToken('test-token')->plainTextToken;
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
-            ->getJson('/api/user');
+            ->getJson('/api/v1/user');
 
         $response->assertOk();
         $response->assertJson([
@@ -101,7 +101,7 @@ class AuthTest extends TestCase
     /** @test */
     public function unauthenticated_user_cannot_access_protected_routes()
     {
-        $response = $this->getJson('/api/user');
+        $response = $this->getJson('/api/v1/user');
 
         $response->assertStatus(401);
     }

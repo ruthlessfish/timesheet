@@ -31,7 +31,7 @@ class InvoiceApiTest extends TestCase
         Invoice::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/invoices');
+            ->getJson('/api/v1/invoices');
 
         $response->assertOk();
         $response->assertJsonStructure([
@@ -68,7 +68,7 @@ class InvoiceApiTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->postJson('/api/invoices', [
+            ->postJson('/api/v1/invoices', [
                 'client_id' => $client->id,
                 'issue_date' => now()->toDateString(),
                 'due_date' => now()->addDays(30)->toDateString(),
@@ -106,7 +106,7 @@ class InvoiceApiTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson("/api/clients/{$client->id}/unbilled-entries");
+            ->getJson("/api/v1/clients/{$client->id}/unbilled-entries");
 
         $response->assertOk();
         $response->assertJsonStructure([
@@ -127,7 +127,7 @@ class InvoiceApiTest extends TestCase
         $invoice = Invoice::factory()->create(['user_id' => $otherUser->id]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson("/api/invoices/{$invoice->id}");
+            ->getJson("/api/v1/invoices/{$invoice->id}");
 
         $response->assertStatus(403);
     }
@@ -142,7 +142,7 @@ class InvoiceApiTest extends TestCase
         ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->deleteJson("/api/invoices/{$invoice->id}");
+            ->deleteJson("/api/v1/invoices/{$invoice->id}");
 
         $response->assertOk();
         $this->assertDatabaseMissing('invoices', ['id' => $invoice->id]);

@@ -29,7 +29,7 @@ class TimeEntryApiTest extends TestCase
         $timeEntry = TimeEntry::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/time-entries');
+            ->getJson('/api/v1/time-entries');
 
         $response->assertOk();
         $response->assertJsonStructure([
@@ -54,7 +54,7 @@ class TimeEntryApiTest extends TestCase
         $project = Project::factory()->create(['user_id' => $this->user->id]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->postJson('/api/time-entries', [
+            ->postJson('/api/v1/time-entries', [
                 'project_id' => $project->id,
                 'description' => 'Test work',
                 'start_time' => now()->subHours(2)->toIso8601String(),
@@ -79,7 +79,7 @@ class TimeEntryApiTest extends TestCase
         $activeTimer = TimeEntry::factory()->running()->create(['user_id' => $this->user->id]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/time-entries/active');
+            ->getJson('/api/v1/time-entries/active');
 
         $response->assertOk();
         $response->assertJson([
@@ -93,7 +93,7 @@ class TimeEntryApiTest extends TestCase
     public function returns_404_when_no_active_timer_via_api()
     {
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/time-entries/active');
+            ->getJson('/api/v1/time-entries/active');
 
         $response->assertStatus(404);
     }
@@ -104,7 +104,7 @@ class TimeEntryApiTest extends TestCase
         $activeTimer = TimeEntry::factory()->running()->create(['user_id' => $this->user->id]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->postJson("/api/time-entries/{$activeTimer->id}/stop");
+            ->postJson("/api/v1/time-entries/{$activeTimer->id}/stop");
 
         $response->assertOk();
         $response->assertJsonStructure([
@@ -125,7 +125,7 @@ class TimeEntryApiTest extends TestCase
         $timeEntry = TimeEntry::factory()->create(['user_id' => $otherUser->id]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson("/api/time-entries/{$timeEntry->id}");
+            ->getJson("/api/v1/time-entries/{$timeEntry->id}");
 
         $response->assertStatus(403);
     }
@@ -140,7 +140,7 @@ class TimeEntryApiTest extends TestCase
         TimeEntry::factory()->create(['user_id' => $this->user->id, 'project_id' => $project2->id]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson("/api/time-entries?project_id={$project1->id}");
+            ->getJson("/api/v1/time-entries?project_id={$project1->id}");
 
         $response->assertOk();
         $response->assertJsonCount(1, 'data');
