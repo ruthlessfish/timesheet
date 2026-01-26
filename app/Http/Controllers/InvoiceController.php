@@ -3,15 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
-use App\Models\InvoiceItem;
-use App\Models\TimeEntry;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\InvoiceService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
     use AuthorizesRequests;
+    
+    public function __construct(
+        private InvoiceService $invoiceService
+    ) {}
     /**
      * Display a listing of the resource.
      */
@@ -38,16 +40,10 @@ class InvoiceController extends Controller
         // Get unbilled time entries if client is selected
         $unbilledTimeEntries = collect();
         if ($request->has('client_id')) {
-            $unbilledTimeEntries = TimeEntry::whereHas('project', function ($query) use ($request) {
-                $query->where('client_id', $request->client_id);
-            })
-            ->where('user_id', auth()->id())
-            ->where('is_billable', true)
-            ->where('is_invoiced', false)
-            ->whereNotNull('end_time')
-            ->with('project')
-            ->orderBy('start_time', 'desc')
-            ->get();
+            $unbilledTimeEntries = $this->invoiceService->getUnbilledEntriesForClient(
+                $request->client_id,
+                auth()->id()
+            );
         }
             
         return view('invoices.create', compact('clients', 'unbilledTimeEntries'));
@@ -69,42 +65,12 @@ class InvoiceController extends Controller
             'time_entries.*' => 'exists:time_entries,id',
         ]);
         
-        $validated['user_id'] = auth()->id();
-        $validated['tax_rate'] = $validated['tax_rate'] ?? 0;
-        
-        $invoice = Invoice::create($validated);
-        
-        // Add time entries as invoice items
-        if ($request->has('time_entries')) {
-            foreach ($request->time_entries as $timeEntryId) {
-                $timeEntry = TimeEntry::with('project.client')->find($timeEntryId);
-                
-                if ($timeEntry && $timeEntry->user_id === auth()->id()) {
-                    $rate = $timeEntry->hourly_rate 
-                        ?? $timeEntry->project->hourly_rate 
-                        ?? $timeEntry->project->client->hourly_rate 
-                        ?? 0;
-                    
-                    $hours = $timeEntry->duration / 60;
-                    
-                    InvoiceItem::create([
-                        'invoice_id' => $invoice->id,
-                        'time_entry_id' => $timeEntry->id,
-                        'description' => $timeEntry->description ?? $timeEntry->project->name,
-                        'quantity' => round($hours, 2),
-                        'rate' => $rate,
-                        'amount' => $hours * $rate,
-                    ]);
-                    
-                    // Mark time entry as invoiced
-                    $timeEntry->update(['is_invoiced' => true]);
-                }
-            }
-        }
-        
-        // Calculate totals
-        $invoice->calculateTotals();
-        $invoice->save();
+        $invoice = $this->invoiceService->createFromTimeEntries(
+            userId: auth()->id(),
+            clientId: $validated['client_id'],
+            timeEntryIds: $validated['time_entries'] ?? [],
+            data: $validated
+        );
         
         return redirect()->route('invoices.show', $invoice)
             ->with('success', 'Invoice created successfully.');
@@ -155,13 +121,7 @@ class InvoiceController extends Controller
             'status' => 'required|in:draft,sent,paid,overdue,cancelled',
         ]);
         
-        $validated['tax_rate'] = $validated['tax_rate'] ?? 0;
-        
-        $invoice->update($validated);
-        
-        // Recalculate totals
-        $invoice->calculateTotals();
-        $invoice->save();
+        $this->invoiceService->updateInvoice($invoice, $validated);
         
         return redirect()->route('invoices.show', $invoice)
             ->with('success', 'Invoice updated successfully.');
@@ -174,14 +134,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('delete', $invoice);
         
-        // Mark time entries as not invoiced
-        foreach ($invoice->items as $item) {
-            if ($item->time_entry_id) {
-                TimeEntry::find($item->time_entry_id)->update(['is_invoiced' => false]);
-            }
-        }
-        
-        $invoice->delete();
+        $this->invoiceService->deleteInvoice($invoice);
         
         return redirect()->route('invoices.index')
             ->with('success', 'Invoice deleted successfully.');
@@ -196,7 +149,7 @@ class InvoiceController extends Controller
         
         $invoice->load(['client', 'items', 'user']);
         
-        $pdf = Pdf::loadView('invoices.pdf', compact('invoice'));
+        $pdf = $this->invoiceService->generatePDF($invoice);
         
         return $pdf->download('invoice-' . $invoice->invoice_number . '.pdf');
     }

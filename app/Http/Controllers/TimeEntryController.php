@@ -3,40 +3,45 @@
 namespace App\Http\Controllers;
 
 use App\Models\TimeEntry;
+use App\Services\TimeEntryService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
 class TimeEntryController extends Controller
 {
     use AuthorizesRequests;
+    
+    public function __construct(
+        private TimeEntryService $timeEntryService
+    ) {}
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $query = auth()->user()->timeEntries()
-            ->with('project.client');
+        $filters = [];
         
         // Filter by project if provided
         if ($request->has('project_id')) {
-            $query->where('project_id', $request->project_id);
+            $filters['project_id'] = $request->project_id;
         }
         
         // Filter by date range if provided
         if ($request->has('start_date')) {
-            $query->whereDate('start_time', '>=', $request->start_date);
+            $filters['start_date'] = $request->start_date;
         }
         if ($request->has('end_date')) {
-            $query->whereDate('start_time', '<=', $request->end_date);
+            $filters['end_date'] = $request->end_date;
         }
         
-        $timeEntries = $query->orderBy('start_time', 'desc')->paginate(20);
+        $filters['paginate'] = 20;
+        $filters['orderBy'] = 'start_time';
+        $filters['orderDirection'] = 'desc';
+        
+        $timeEntries = $this->timeEntryService->getEntriesForUser(auth()->id(), $filters);
         
         // Get active timer if any
-        $activeTimer = auth()->user()->timeEntries()
-            ->whereNull('end_time')
-            ->with('project.client')
-            ->first();
+        $activeTimer = $this->timeEntryService->getActiveTimer(auth()->id());
         
         $projects = auth()->user()->projects()
             ->with('client')
@@ -75,19 +80,19 @@ class TimeEntryController extends Controller
             'is_billable' => 'boolean',
         ]);
         
-        $validated['user_id'] = auth()->id();
         $validated['is_billable'] = $request->has('is_billable') ? true : false;
         
-        $timeEntry = TimeEntry::create($validated);
-        
-        // Calculate duration if end_time is provided
-        if ($validated['end_time'] ?? null) {
-            $timeEntry->calculateDuration();
-            $timeEntry->save();
+        try {
+            $timeEntry = $this->timeEntryService->createManualEntry(
+                userId: auth()->id(),
+                data: $validated
+            );
+            
+            return redirect()->route('time-entries.index')
+                ->with('success', 'Time entry created successfully.');
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', $e->getMessage());
         }
-        
-        return redirect()->route('time-entries.index')
-            ->with('success', 'Time entry created successfully.');
     }
 
     /**
@@ -136,13 +141,7 @@ class TimeEntryController extends Controller
         
         $validated['is_billable'] = $request->has('is_billable') ? true : false;
         
-        $timeEntry->update($validated);
-        
-        // Recalculate duration
-        if ($validated['end_time'] ?? null) {
-            $timeEntry->calculateDuration();
-            $timeEntry->save();
-        }
+        $this->timeEntryService->updateEntry($timeEntry, $validated);
         
         return redirect()->route('time-entries.index')
             ->with('success', 'Time entry updated successfully.');
@@ -172,7 +171,7 @@ class TimeEntryController extends Controller
             return back()->with('error', 'This timer has already been stopped.');
         }
         
-        $timeEntry->stop();
+        $this->timeEntryService->stopTimer($timeEntry);
         
         return redirect()->route('time-entries.index')
             ->with('success', 'Timer stopped successfully.');

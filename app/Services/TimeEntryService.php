@@ -137,8 +137,9 @@ class TimeEntryService
      * 
      * @param int $userId
      * @param array<string, mixed> $filters
+     * @return Collection|\Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
-    public function getEntriesForUser(int $userId, array $filters = []): Collection
+    public function getEntriesForUser(int $userId, array $filters = [])
     {
         $query = TimeEntry::where('user_id', $userId)
             ->with('project.client');
@@ -163,7 +164,21 @@ class TimeEntryService
             $query->where('is_invoiced', $filters['is_invoiced']);
         }
 
-        return $query->orderBy('start_time', 'desc')->get();
+        $orderBy = $filters['orderBy'] ?? 'start_time';
+        $orderDirection = $filters['orderDirection'] ?? 'desc';
+        $query->orderBy($orderBy, $orderDirection);
+
+        // Support pagination if requested
+        if (isset($filters['paginate'])) {
+            return $query->paginate($filters['paginate']);
+        }
+
+        // Support limiting results
+        if (isset($filters['limit'])) {
+            return $query->limit($filters['limit'])->get();
+        }
+
+        return $query->get();
     }
 
     /**

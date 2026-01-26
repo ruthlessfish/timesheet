@@ -135,36 +135,24 @@ tests/
 8. ✅ `TimeEntryTest::user_can_view_their_time_entries()` - Authorization working
 9. ✅ `InvoiceTest::user_can_generate_pdf_for_their_invoice()` - PDF generation verified
 
-## Phase 3: Refactor Controllers to Use Services (Week 4) 🔄 IN PROGRESS
+## Phase 3: Refactor Controllers to Use Services (Week 4) ✅ COMPLETE
 
-### 3.1 Approach
+### 3.1 Approach ✅
 - **Incremental**: Refactor one controller at a time
 - **Test-First**: Verify existing tests still pass after refactoring
 - **Backward Compatible**: Keep controller methods working during transition
 - **No Breaking Changes**: HTTP API stays the same
 - **Dependency Injection**: Inject services via constructor
 
-### 3.2 Controllers to Refactor
-1. ⏳ **DashboardController** - Replace inline analytics with AnalyticsService
-2. ⏳ **InvoiceController** - Replace store/destroy/pdf logic with InvoiceService
-3. ⏳ **TimeEntryController** - Replace timer/duration logic with TimeEntryService
+### 3.2 Controllers Refactored ✅
+1. ✅ **DashboardController** - Replaced inline analytics with AnalyticsService & TimeEntryService
+2. ✅ **InvoiceController** - Replaced store/destroy/pdf logic with InvoiceService
+3. ✅ **TimeEntryController** - Replaced timer/duration logic with TimeEntryService
 4. ✅ **Already service-based**: ClientController, ProjectController (minimal logic)
 
-### 3.3 Example Refactor (DashboardController::index)
+### 3.3 Refactored: DashboardController::index ✅
 
-**Before**:
-```php
-public function index() {
-    $user = auth()->user();
-    
-    // 80+ lines of inline queries and calculations
-    $totalClients = $user->clients()->where('is_active', true)->count();
-    $monthlyMinutes = $user->timeEntries()
-        ->whereBetween('start_time', [$startOfMonth, $endOfMonth])
-        ->sum('duration');
-    // ... many more queries
-}
-```
+**Before**: 80+ lines of inline queries and calculations
 
 **After**:
 ```php
@@ -183,40 +171,36 @@ public function index() {
     $activeTimer = $this->timeEntryService->getActiveTimer($user->id);
     $recentTimeEntries = $this->timeEntryService->getEntriesForUser($user->id, ['limit' => 10]);
     
+    // Extract stats array
+    $totalClients = $stats['total_clients'];
+    $activeProjects = $stats['active_projects'];
+    $monthlyHours = $stats['monthly_hours'];
+    $monthlyRevenue = $stats['monthly_revenue'];
+    
     return view('dashboard', compact(
-        'stats', 'last7Days', 'projectHours', 'billableRatio',
-        'activeTimer', 'recentTimeEntries'
+        'totalClients', 'activeProjects', 'monthlyHours', 'monthlyRevenue',
+        'recentTimeEntries', 'activeTimer', 'last7Days', 'projectHours',
+        'billableMinutes', 'nonBillableMinutes'
     ));
 }
 ```
 
-### 3.4 Example Refactor (InvoiceController::store)
+### 3.4 Refactored: InvoiceController ✅
 
-**Before**:
-```php
-public function store(Request $request) {
-    // 80 lines of business logic mixed with HTTP concerns
-    $timeEntries = TimeEntry::whereIn('id', $request->time_entries)->get();
-    foreach ($timeEntries as $entry) {
-        $rate = $entry->hourly_rate ?? $entry->project->hourly_rate ?? ...
-        // Manual rate resolution, item creation, marking...
-    }
-}
-```
+**Key Changes**:
+- ✅ Constructor injection of `InvoiceService`
+- ✅ `create()` - Uses `getUnbilledEntriesForClient()` instead of manual query
+- ✅ `store()` - Replaced 50+ lines with `createFromTimeEntries()`
+- ✅ `update()` - Uses `updateInvoice()` for totals recalculation
+- ✅ `destroy()` - Uses `deleteInvoice()` for unmarking workflow
+- ✅ `pdf()` - Uses `generatePDF()` for Dompdf instance
+
+**Before**: Manual rate resolution, InvoiceItem creation, time entry marking (80 lines)
 
 **After**:
 ```php
-public function __construct(private InvoiceService $invoiceService) {}
-
 public function store(Request $request) {
-    $validated = $request->validate([
-        'client_id' => 'required|exists:clients,id',
-        'time_entries' => 'nullable|array',
-        'issue_date' => 'required|date',
-        'due_date' => 'required|date|after:issue_date',
-        'tax_rate' => 'nullable|numeric|min:0|max:100',
-        'notes' => 'nullable|string',
-    ]);
+    $validated = $request->validate([...]);
     
     $invoice = $this->invoiceService->createFromTimeEntries(
         userId: auth()->id(),
@@ -230,7 +214,28 @@ public function store(Request $request) {
 }
 ```
 
-## Phase 4: REST API Development (Week 4-5)
+### 3.5 Refactored: TimeEntryController ✅
+
+**Key Changes**:
+- ✅ Constructor injection of `TimeEntryService`
+- ✅ `index()` - Uses `getEntriesForUser()` with pagination support
+- ✅ `store()` - Uses `createManualEntry()` with exception handling
+- ✅ `update()` - Uses `updateEntry()` for duration recalculation
+- ✅ `stop()` - Uses `stopTimer()` instead of model method
+- ✅ `getEntriesForUser()` enhanced to support pagination, ordering, limiting
+
+**Service Enhancement**: Added flexible return types to `TimeEntryService::getEntriesForUser()`
+```php
+// Supports:
+- $filters['paginate'] => LengthAwarePaginator
+- $filters['limit'] => Collection (limited)
+- default => Collection (all)
+```
+
+**Test Results**: ✅ All 147 tests passing, 313 assertions
+**Test Results**: ✅ All 147 tests passing, 313 assertions
+
+## Phase 4: REST API Development (Week 5-6) ⏳ READY TO START
 
 ### 4.1 Why API After Services?
 - **Shared Business Logic**: Services ensure web and API controllers use identical workflows
