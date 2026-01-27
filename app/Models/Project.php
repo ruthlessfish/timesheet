@@ -7,9 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+use App\Models\Traits\HasStatus;
+
 class Project extends Model
 {
-    use HasFactory;
+    use HasFactory, HasStatus;
+
     protected $fillable = [
         'client_id',
         'user_id',
@@ -58,4 +61,13 @@ class Project extends Model
                 return ($entry->duration / 60) * ($entry->hourly_rate ?? $this->hourly_rate ?? $this->client->hourly_rate ?? 0);
             });
     }
+
+    public function getIsOverBudgetAttribute(): bool
+    {
+        if (is_null($this->budget)) {
+            return false;
+        }
+        return $this->total_amount > $this->budget;
+    }
+
 }

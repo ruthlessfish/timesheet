@@ -52,13 +52,7 @@
                                         ${{ number_format($invoice->total, 2) }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            @if($invoice->status === 'paid') bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400
-                                            @elseif($invoice->status === 'sent') bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400
-                                            @elseif($invoice->status === 'draft') bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300
-                                            @elseif($invoice->status === 'overdue') bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400
-                                            @else bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400
-                                            @endif">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $invoice->status_css }}">
                                             {{ ucfirst($invoice->status) }}
                                         </span>
                                     </td>
