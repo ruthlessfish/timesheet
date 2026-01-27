@@ -64,7 +64,7 @@
             
             <div class="mt-2 space-y-1">
                 <!-- Theme Toggle -->
-                <div class="px-3 py-2">
+                <div class="px-3 py-2dd border-t border-b border-gray-200 dark:border-gray-700">
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Theme</span>
                         <x-theme-toggle />
@@ -186,10 +186,7 @@
                 <div class="mt-2 space-y-1">
                     <!-- Theme Toggle -->
                     <div class="px-3 py-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Theme</span>
-                            <x-theme-toggle />
-                        </div>
+                        <x-theme-toggle />
                     </div>
 
                     <a href="{{ route('profile.edit') }}" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors">
