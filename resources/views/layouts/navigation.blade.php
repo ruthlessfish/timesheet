@@ -40,6 +40,13 @@
                 {{ __('Time Entries') }}
             </a>
 
+            <a href="{{ route('calendar.index') }}" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors {{ request()->routeIs('calendar.*') ? 'bg-blue-100 dark:bg-gray-900 text-blue-700 dark:text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white' }}">
+                <svg class="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {{ __('Calendar') }}
+            </a>
+
             <a href="{{ route('invoices.index') }}" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors {{ request()->routeIs('invoices.*') ? 'bg-blue-100 dark:bg-gray-900 text-blue-700 dark:text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white' }}">
                 <svg class="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -53,7 +60,7 @@
             <div class="flex items-center px-3 py-2">
                 <div class="flex-shrink-0">
                     <div class="h-8 w-8 rounded-full bg-blue-100 dark:bg-gray-600 flex items-center justify-center">
-                        <span class="text-sm font-medium text-blue-700 dark:text-white">{{ substr(Auth::user()->name, 0, 1) }}</span>
+                        <img src="{{ Auth::user()->gravatar }}" alt="{{ Auth::user()->name }}" class="h-8 w-8 rounded-full">
                     </div>
                 </div>
                 <div class="ml-3 flex-1">
@@ -160,6 +167,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     {{ __('Time Entries') }}
+                </a>
+
+                <a href="{{ route('calendar.index') }}" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors {{ request()->routeIs('calendar.*') ? 'bg-blue-100 dark:bg-gray-900 text-blue-700 dark:text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white' }}">
+                    <svg class="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {{ __('Calendar') }}
                 </a>
 
                 <a href="{{ route('invoices.index') }}" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors {{ request()->routeIs('invoices.*') ? 'bg-blue-100 dark:bg-gray-900 text-blue-700 dark:text-white' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white' }}">

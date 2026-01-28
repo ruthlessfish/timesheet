@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -23,7 +24,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'theme_preference'
+        'theme_preference',
     ];
 
     /**
@@ -67,5 +68,14 @@ class User extends Authenticatable
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    public function getGravatarAttribute()
+    {
+        $cacheKey = 'gravatar_'.md5($this->email);
+
+        return Cache::remember($cacheKey, now()->hour(), function () {
+            return gravatar($this->email)->size(200)->url();
+        });
     }
 }

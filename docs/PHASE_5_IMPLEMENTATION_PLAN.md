@@ -210,603 +210,7 @@ php artisan make:test Settings/ThemePreferenceTest
 
 ---
 
-## ⌨️ Feature 2: Keyboard Shortcuts
-
-**Estimated Time**: 4-5 days  
-**Priority**: High (power user feature)  
-**Complexity**: Medium
-
-### Technical Requirements
-- Global keyboard event listener
-- Shortcut registry system
-- Visual shortcut help modal
-- Conflict prevention
-- Accessibility considerations
-
-### Planned Shortcuts
-
-| Shortcut | Action | Context |
-|----------|--------|---------|
-| `Ctrl/Cmd + T` | Start timer (first project) | Global |
-| `Ctrl/Cmd + S` | Stop active timer | When timer running |
-| `Ctrl/Cmd + N` | New time entry | Time entries page |
-| `Ctrl/Cmd + E` | Edit selected entry | Time entry selected |
-| `Ctrl/Cmd + /` | Show shortcuts help | Global |
-| `Ctrl/Cmd + K` | Quick search/command palette | Global |
-| `Esc` | Close modals | When modal open |
-| `Arrow Keys` | Navigate entries | Time entries list |
-
-### Implementation Steps
-
-#### 2.1 Keyboard Manager Service (Day 1)
-Create JavaScript module: `resources/js/keyboard-manager.js`
-
-```javascript
-class KeyboardShortcutManager {
-    constructor() {
-        this.shortcuts = new Map();
-        this.enabled = true;
-        this.init();
-    }
-    
-    init() {
-        document.addEventListener('keydown', this.handleKeyPress.bind(this));
-    }
-    
-    register(key, modifiers, callback, context = 'global') {
-        const shortcutKey = this.createKey(key, modifiers, context);
-        this.shortcuts.set(shortcutKey, callback);
-    }
-    
-    createKey(key, modifiers, context) {
-        const parts = [];
-        if (modifiers.ctrl) parts.push('ctrl');
-        if (modifiers.shift) parts.push('shift');
-        if (modifiers.alt) parts.push('alt');
-        if (modifiers.meta) parts.push('meta');
-        parts.push(key.toLowerCase());
-        parts.push(context);
-        return parts.join('+');
-    }
-    
-    handleKeyPress(event) {
-        if (!this.enabled) return;
-        
-        // Don't trigger shortcuts when typing in inputs
-        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)) {
-            if (event.key !== 'Escape') return;
-        }
-        
-        const modifiers = {
-            ctrl: event.ctrlKey || event.metaKey, // Mac uses Cmd (metaKey)
-            shift: event.shiftKey,
-            alt: event.altKey,
-            meta: event.metaKey,
-        };
-        
-        const currentContext = this.getCurrentContext();
-        const shortcutKey = this.createKey(event.key, modifiers, currentContext);
-        const globalKey = this.createKey(event.key, modifiers, 'global');
-        
-        const callback = this.shortcuts.get(shortcutKey) || this.shortcuts.get(globalKey);
-        
-        if (callback) {
-            event.preventDefault();
-            callback(event);
-        }
-    }
-    
-    getCurrentContext() {
-        // Determine context from current page
-        const path = window.location.pathname;
-        if (path.includes('/time-entries')) return 'time-entries';
-        if (path.includes('/invoices')) return 'invoices';
-        if (path.includes('/projects')) return 'projects';
-        if (path.includes('/clients')) return 'clients';
-        return 'global';
-    }
-    
-    disable() {
-        this.enabled = false;
-    }
-    
-    enable() {
-        this.enabled = true;
-    }
-}
-
-// Export singleton instance
-window.keyboardManager = new KeyboardShortcutManager();
-```
-
-#### 2.2 Register Global Shortcuts (Day 2)
-Update `resources/js/app.js`:
-
-```javascript
-import './bootstrap';
-import './keyboard-manager';
-import Alpine from 'alpinejs';
-
-window.Alpine = Alpine;
-Alpine.start();
-
-// Register global shortcuts
-document.addEventListener('DOMContentLoaded', () => {
-    const km = window.keyboardManager;
-    
-    // Start timer
-    km.register('t', { ctrl: true }, () => {
-        const startButton = document.getElementById('startTimerBtn');
-        if (startButton && !startButton.disabled) {
-            startButton.click();
-        }
-    });
-    
-    // Stop timer
-    km.register('s', { ctrl: true }, () => {
-        const stopButton = document.querySelector('[data-action="stop-timer"]');
-        if (stopButton) {
-            stopButton.click();
-        }
-    });
-    
-    // Show help modal
-    km.register('/', { ctrl: true }, () => {
-        Alpine.store('shortcuts').open();
-    });
-    
-    // Quick search (future feature)
-    km.register('k', { ctrl: true }, () => {
-        // TODO: Open command palette
-        console.log('Command palette - coming soon!');
-    });
-});
-```
-
-#### 2.3 Shortcuts Help Modal (Day 3)
-Create component: `resources/views/components/shortcuts-modal.blade.php`
-
-```html
-<div x-data="{ open: false }" 
-     @keydown.ctrl.slash.window="open = true"
-     @keydown.escape.window="open = false">
-    
-    <!-- Trigger Button (in header) -->
-    <button @click="open = true" 
-            class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
-            title="Keyboard Shortcuts (Ctrl+/)">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-        </svg>
-    </button>
-    
-    <!-- Modal -->
-    <div x-show="open" 
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 overflow-y-auto"
-         style="display: none;">
-        
-        <!-- Backdrop -->
-        <div class="fixed inset-0 bg-black bg-opacity-50" @click="open = false"></div>
-        
-        <!-- Modal Content -->
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                        Keyboard Shortcuts
-                    </h2>
-                    <button @click="open = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                
-                <div class="space-y-6">
-                    <!-- Global Shortcuts -->
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Global</h3>
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                                <span class="text-gray-600 dark:text-gray-400">Start timer</span>
-                                <kbd class="px-2 py-1 text-sm font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
-                                    Ctrl + T
-                                </kbd>
-                            </div>
-                            <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                                <span class="text-gray-600 dark:text-gray-400">Stop timer</span>
-                                <kbd class="px-2 py-1 text-sm font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
-                                    Ctrl + S
-                                </kbd>
-                            </div>
-                            <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                                <span class="text-gray-600 dark:text-gray-400">Show shortcuts</span>
-                                <kbd class="px-2 py-1 text-sm font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
-                                    Ctrl + /
-                                </kbd>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Time Entries -->
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Time Entries</h3>
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                                <span class="text-gray-600 dark:text-gray-400">New entry</span>
-                                <kbd class="px-2 py-1 text-sm font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
-                                    Ctrl + N
-                                </kbd>
-                            </div>
-                            <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                                <span class="text-gray-600 dark:text-gray-400">Edit selected</span>
-                                <kbd class="px-2 py-1 text-sm font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
-                                    Ctrl + E
-                                </kbd>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Navigation -->
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-3">Navigation</h3>
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700">
-                                <span class="text-gray-600 dark:text-gray-400">Close modal</span>
-                                <kbd class="px-2 py-1 text-sm font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg dark:bg-gray-600 dark:text-gray-100 dark:border-gray-500">
-                                    Esc
-                                </kbd>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
-                        <kbd class="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">Ctrl</kbd> 
-                        on Windows/Linux, 
-                        <kbd class="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">⌘ Cmd</kbd> 
-                        on Mac
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-```
-
-#### 2.4 Page-Specific Shortcuts (Day 4)
-**Time Entries Index** (`resources/views/time-entries/index.blade.php`):
-```javascript
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const km = window.keyboardManager;
-    
-    // New time entry
-    km.register('n', { ctrl: true }, () => {
-        window.location.href = '{{ route("time-entries.create") }}';
-    }, 'time-entries');
-    
-    // Edit selected entry
-    km.register('e', { ctrl: true }, () => {
-        const selected = document.querySelector('[data-selected="true"]');
-        if (selected) {
-            const editUrl = selected.dataset.editUrl;
-            window.location.href = editUrl;
-        }
-    }, 'time-entries');
-});
-</script>
-```
-
-#### 2.5 Testing (Day 5)
-- ✅ All shortcuts trigger correct actions
-- ✅ Shortcuts don't interfere with form inputs
-- ✅ Help modal displays correctly
-- ✅ Mac Cmd key works like Ctrl
-- ✅ Shortcuts disabled when appropriate
-
----
-
-## 🔔 Feature 3: Timer Notifications
-
-**Estimated Time**: 3-4 days  
-**Priority**: Medium  
-**Complexity**: Low-Medium
-
-### Technical Requirements
-- Browser Notification API
-- Permission management UI
-- Notification preferences in database
-- Background timer tracking
-- Sound notifications (optional)
-
-### Implementation Steps
-
-#### 3.1 Database Changes (Day 1)
-```bash
-php artisan make:migration add_notification_preferences_to_users_table
-```
-
-**Migration**:
-```php
-Schema::table('users', function (Blueprint $table) {
-    $table->json('notification_preferences')->nullable()->after('theme_preference');
-});
-```
-
-**Default preferences structure**:
-```json
-{
-  "timer_notifications": true,
-  "thresholds": [3600, 7200, 14400, 28800], // 1h, 2h, 4h, 8h in seconds
-  "sound_enabled": true,
-  "notification_enabled": true
-}
-```
-
-#### 3.2 Notification Manager (Day 1-2)
-Create `resources/js/notification-manager.js`:
-
-```javascript
-class TimerNotificationManager {
-    constructor() {
-        this.permission = Notification.permission;
-        this.thresholds = [3600, 7200, 14400, 28800]; // seconds
-        this.notifiedThresholds = new Set();
-        this.checkInterval = null;
-    }
-    
-    async requestPermission() {
-        if (this.permission === 'granted') return true;
-        
-        const result = await Notification.requestPermission();
-        this.permission = result;
-        return result === 'granted';
-    }
-    
-    startMonitoring(timerStartTime) {
-        this.notifiedThresholds.clear();
-        
-        // Check every minute
-        this.checkInterval = setInterval(() => {
-            this.checkThresholds(timerStartTime);
-        }, 60000);
-        
-        // Check immediately
-        this.checkThresholds(timerStartTime);
-    }
-    
-    stopMonitoring() {
-        if (this.checkInterval) {
-            clearInterval(this.checkInterval);
-            this.checkInterval = null;
-        }
-        this.notifiedThresholds.clear();
-    }
-    
-    checkThresholds(startTime) {
-        if (this.permission !== 'granted') return;
-        
-        const elapsed = Math.floor((Date.now() - new Date(startTime)) / 1000);
-        
-        for (const threshold of this.thresholds) {
-            if (elapsed >= threshold && !this.notifiedThresholds.has(threshold)) {
-                this.notify(threshold);
-                this.notifiedThresholds.add(threshold);
-            }
-        }
-    }
-    
-    notify(thresholdSeconds) {
-        const hours = Math.floor(thresholdSeconds / 3600);
-        const minutes = Math.floor((thresholdSeconds % 3600) / 60);
-        
-        let message;
-        if (hours > 0) {
-            message = `Your timer has been running for ${hours} hour${hours > 1 ? 's' : ''}`;
-        } else {
-            message = `Your timer has been running for ${minutes} minutes`;
-        }
-        
-        const notification = new Notification('Timer Alert', {
-            body: message,
-            icon: '/images/logo.png', // Add your app icon
-            badge: '/images/badge.png',
-            tag: `timer-${thresholdSeconds}`,
-            requireInteraction: false,
-        });
-        
-        // Auto-close after 5 seconds
-        setTimeout(() => notification.close(), 5000);
-        
-        // Optional: Play sound
-        if (window.notificationSound) {
-            window.notificationSound.play();
-        }
-    }
-    
-    showTestNotification() {
-        if (this.permission === 'granted') {
-            new Notification('Test Notification', {
-                body: 'Notifications are working correctly!',
-                icon: '/images/logo.png',
-            });
-        }
-    }
-}
-
-window.timerNotifications = new TimerNotificationManager();
-```
-
-#### 3.3 Integrate with Dashboard (Day 2)
-Update `resources/views/dashboard.blade.php`:
-
-```javascript
-<script>
-@if($activeTimer)
-    // Start monitoring active timer
-    const startTime = '{{ $activeTimer->start_time }}';
-    window.timerNotifications.startMonitoring(startTime);
-@endif
-
-// When timer starts via API
-async function startTimer(projectId) {
-    // ... existing code ...
-    
-    if (response.ok) {
-        const data = await response.json();
-        
-        // Request notification permission if not granted
-        if (Notification.permission === 'default') {
-            await window.timerNotifications.requestPermission();
-        }
-        
-        // Start monitoring
-        window.timerNotifications.startMonitoring(data.data.start_time);
-        
-        window.location.reload();
-    }
-}
-
-// Stop monitoring when timer stops
-window.addEventListener('beforeunload', () => {
-    window.timerNotifications.stopMonitoring();
-});
-</script>
-```
-
-#### 3.4 Settings UI (Day 3)
-Create settings page: `resources/views/settings/notifications.blade.php`
-
-```html
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Notification Settings') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
-                    <form method="POST" action="{{ route('settings.notifications.update') }}" 
-                          x-data="notificationSettings()">
-                        @csrf
-                        @method('PATCH')
-                        
-                        <!-- Browser Notifications -->
-                        <div class="mb-6">
-                            <label class="flex items-center">
-                                <input type="checkbox" name="notifications_enabled" 
-                                       x-model="enabled"
-                                       @change="updatePermission()"
-                                       class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                                <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">
-                                    Enable browser notifications
-                                </span>
-                            </label>
-                            
-                            <button type="button" @click="testNotification()" 
-                                    class="mt-2 text-sm text-indigo-600 hover:text-indigo-500">
-                                Send test notification
-                            </button>
-                        </div>
-                        
-                        <!-- Timer Thresholds -->
-                        <div class="mb-6" x-show="enabled">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Notify me when timer reaches:
-                            </label>
-                            
-                            <div class="space-y-2">
-                                <label class="flex items-center">
-                                    <input type="checkbox" name="thresholds[]" value="3600" 
-                                           class="rounded border-gray-300 text-indigo-600">
-                                    <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">1 hour</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" name="thresholds[]" value="7200" checked
-                                           class="rounded border-gray-300 text-indigo-600">
-                                    <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">2 hours</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" name="thresholds[]" value="14400" checked
-                                           class="rounded border-gray-300 text-indigo-600">
-                                    <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">4 hours</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" name="thresholds[]" value="28800"
-                                           class="rounded border-gray-300 text-indigo-600">
-                                    <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">8 hours</span>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <!-- Sound -->
-                        <div class="mb-6" x-show="enabled">
-                            <label class="flex items-center">
-                                <input type="checkbox" name="sound_enabled" checked
-                                       class="rounded border-gray-300 text-indigo-600">
-                                <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">
-                                    Play sound with notifications
-                                </span>
-                            </label>
-                        </div>
-                        
-                        <div class="flex items-center justify-end">
-                            <x-primary-button>
-                                {{ __('Save Settings') }}
-                            </x-primary-button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</x-app-layout>
-
-<script>
-function notificationSettings() {
-    return {
-        enabled: {{ auth()->user()->notification_preferences['notification_enabled'] ?? 'false' }},
-        
-        async updatePermission() {
-            if (this.enabled && Notification.permission !== 'granted') {
-                const result = await Notification.requestPermission();
-                if (result !== 'granted') {
-                    this.enabled = false;
-                    alert('Please allow notifications in your browser settings');
-                }
-            }
-        },
-        
-        testNotification() {
-            window.timerNotifications.showTestNotification();
-        }
-    }
-}
-</script>
-```
-
-#### 3.5 Testing (Day 4)
-- ✅ Permission request works
-- ✅ Notifications appear at thresholds
-- ✅ Settings persist correctly
-- ✅ No duplicate notifications
-- ✅ Works across browser tabs
-
----
-
-## 📅 Feature 4: Calendar View
+## 📅 Feature 2: Calendar View
 
 **Estimated Time**: 7-10 days  
 **Priority**: High (great visual overview)  
@@ -821,12 +225,12 @@ function notificationSettings() {
 
 ### Implementation Steps
 
-#### 4.1 Install FullCalendar (Day 1)
+#### 2.1 Install FullCalendar (Day 1)
 ```bash
 npm install @fullcalendar/core @fullcalendar/daygrid @fullcalendar/interaction
 ```
 
-#### 4.2 Create Calendar Route & Controller (Day 1-2)
+#### 2.2 Create Calendar Route & Controller (Day 1-2)
 **Routes**:
 ```php
 Route::middleware('auth')->group(function () {
@@ -902,7 +306,7 @@ class CalendarController extends Controller
 }
 ```
 
-#### 4.3 Calendar View (Day 3-5)
+#### 2.3 Calendar View (Day 3-5)
 Create `resources/views/calendar/index.blade.php`:
 
 ```html
@@ -1048,7 +452,7 @@ Create `resources/views/calendar/index.blade.php`:
 </x-app-layout>
 ```
 
-#### 4.4 Add Navigation Link (Day 6)
+#### 2.4 Add Navigation Link (Day 6)
 Update `resources/views/layouts/navigation.blade.php`:
 
 ```html
@@ -1057,7 +461,7 @@ Update `resources/views/layouts/navigation.blade.php`:
 </x-nav-link>
 ```
 
-#### 4.5 Testing (Day 7-8)
+#### 2.5 Testing (Day 7-8)
 - ✅ Calendar loads correctly
 - ✅ Events fetch via AJAX
 - ✅ Click opens entry details
@@ -1067,232 +471,7 @@ Update `resources/views/layouts/navigation.blade.php`:
 
 ---
 
-## 📝 Feature 5: Time Entry Templates
-
-**Estimated Time**: 5-7 days  
-**Priority**: Medium  
-**Complexity**: Medium
-
-### Technical Requirements
-- New database table for templates
-- CRUD operations for templates
-- Quick apply template button
-- Save entry as template
-- Template management page
-
-### Implementation Steps
-
-#### 5.1 Database Migration (Day 1)
-```bash
-php artisan make:migration create_time_entry_templates_table
-php artisan make:model TimeEntryTemplate -mfc
-```
-
-**Migration**:
-```php
-Schema::create('time_entry_templates', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained()->onDelete('cascade');
-    $table->foreignId('project_id')->constrained()->onDelete('cascade');
-    $table->string('name'); // Template name (e.g., "Daily standup")
-    $table->text('description')->nullable();
-    $table->boolean('is_billable')->default(true);
-    $table->timestamps();
-});
-```
-
-**Model** (`app/Models/TimeEntryTemplate.php`):
-```php
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
-class TimeEntryTemplate extends Model
-{
-    protected $fillable = [
-        'user_id',
-        'project_id',
-        'name',
-        'description',
-        'is_billable',
-    ];
-
-    protected $casts = [
-        'is_billable' => 'boolean',
-    ];
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function project(): BelongsTo
-    {
-        return $this->belongsTo(Project::class);
-    }
-}
-```
-
-#### 5.2 Controller & Routes (Day 2)
-```bash
-php artisan make:controller TimeEntryTemplateController --resource
-```
-
-**Routes**:
-```php
-Route::middleware('auth')->group(function () {
-    Route::resource('time-entry-templates', TimeEntryTemplateController::class);
-    Route::post('/time-entries/from-template/{template}', [TimeEntryController::class, 'fromTemplate'])
-        ->name('time-entries.from-template');
-});
-```
-
-**Controller** (`app/Http/Controllers/TimeEntryTemplateController.php`):
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use App\Models\TimeEntryTemplate;
-use Illuminate\Http\Request;
-
-class TimeEntryTemplateController extends Controller
-{
-    public function index()
-    {
-        $templates = auth()->user()
-            ->timeEntryTemplates()
-            ->with('project.client')
-            ->latest()
-            ->get();
-            
-        return view('time-entry-templates.index', compact('templates'));
-    }
-    
-    public function create()
-    {
-        $projects = auth()->user()->projects()->with('client')->get();
-        return view('time-entry-templates.create', compact('projects'));
-    }
-    
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'project_id' => 'required|exists:projects,id',
-            'description' => 'nullable|string',
-            'is_billable' => 'boolean',
-        ]);
-        
-        $template = auth()->user()->timeEntryTemplates()->create($validated);
-        
-        return redirect()->route('time-entry-templates.index')
-            ->with('success', 'Template created successfully.');
-    }
-    
-    public function destroy(TimeEntryTemplate $timeEntryTemplate)
-    {
-        $this->authorize('delete', $timeEntryTemplate);
-        
-        $timeEntryTemplate->delete();
-        
-        return back()->with('success', 'Template deleted successfully.');
-    }
-}
-```
-
-#### 5.3 Template Selection UI (Day 3-4)
-Update `resources/views/time-entries/create.blade.php`:
-
-```html
-<div class="mb-6" x-data="templateSelector()">
-    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        Or start from template:
-    </label>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        @foreach($templates as $template)
-        <button type="button" 
-                @click="applyTemplate({{ $template->id }})"
-                class="p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-500 dark:hover:border-indigo-400 transition text-left">
-            <div class="font-semibold text-gray-900 dark:text-white">
-                {{ $template->name }}
-            </div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {{ $template->project->client->name }} - {{ $template->project->name }}
-            </div>
-            @if($template->description)
-            <div class="text-sm text-gray-600 dark:text-gray-500 mt-1">
-                {{ Str::limit($template->description, 50) }}
-            </div>
-            @endif
-        </button>
-        @endforeach
-    </div>
-</div>
-
-<script>
-function templateSelector() {
-    return {
-        applyTemplate(templateId) {
-            // Fetch template data
-            fetch(`/api/v1/time-entry-templates/${templateId}`)
-                .then(response => response.json())
-                .then(data => {
-                    // Fill form fields
-                    document.querySelector('[name="project_id"]').value = data.project_id;
-                    document.querySelector('[name="description"]').value = data.description || '';
-                    document.querySelector('[name="is_billable"]').checked = data.is_billable;
-                    
-                    // Trigger change events to update UI
-                    document.querySelector('[name="project_id"]').dispatchEvent(new Event('change'));
-                });
-        }
-    }
-}
-</script>
-```
-
-#### 5.4 Save as Template Feature (Day 5)
-Add to `resources/views/time-entries/edit.blade.php`:
-
-```html
-<form method="POST" action="{{ route('time-entry-templates.store') }}" 
-      class="mt-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-    @csrf
-    
-    <h3 class="font-semibold text-gray-900 dark:text-white mb-3">
-        Save as Template
-    </h3>
-    
-    <input type="hidden" name="project_id" value="{{ $timeEntry->project_id }}">
-    <input type="hidden" name="description" value="{{ $timeEntry->description }}">
-    <input type="hidden" name="is_billable" value="{{ $timeEntry->is_billable }}">
-    
-    <div class="flex items-center space-x-3">
-        <input type="text" name="name" placeholder="Template name (e.g., Daily standup)"
-               class="flex-1 rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
-               required>
-        <x-primary-button>
-            Save Template
-        </x-primary-button>
-    </div>
-</form>
-```
-
-#### 5.5 Testing (Day 6-7)
-- ✅ Templates create correctly
-- ✅ Apply template fills form
-- ✅ Save from existing entry works
-- ✅ Delete template works
-- ✅ Authorization enforced
-
----
-
-## ✅ Feature 6: Bulk Operations
+## ✅ Feature 3: Bulk Operations
 
 **Estimated Time**: 5-7 days  
 **Priority**: High  
@@ -1307,7 +486,7 @@ Add to `resources/views/time-entries/edit.blade.php`:
 
 ### Implementation Steps
 
-#### 6.1 Selection UI (Day 1-2)
+#### 3.1 Selection UI (Day 1-2)
 Update `resources/views/time-entries/index.blade.php`:
 
 ```html
@@ -1453,7 +632,7 @@ function bulkSelector() {
 </script>
 ```
 
-#### 6.2 Backend Bulk Operations (Day 3-4)
+#### 3.2 Backend Bulk Operations (Day 3-4)
 **Routes**:
 ```php
 Route::post('/time-entries/bulk-delete', [TimeEntryController::class, 'bulkDelete'])
@@ -1521,7 +700,7 @@ public function bulkUpdate(Request $request)
 }
 ```
 
-#### 6.3 Bulk Edit Form (Day 5)
+#### 3.3 Bulk Edit Form (Day 5)
 Create `resources/views/time-entries/bulk-edit.blade.php`:
 
 ```html
@@ -1613,7 +792,7 @@ Create `resources/views/time-entries/bulk-edit.blade.php`:
 </x-app-layout>
 ```
 
-#### 6.4 Testing (Day 6-7)
+#### 3.4 Testing (Day 6-7)
 - ✅ Selection UI works correctly
 - ✅ Bulk delete removes entries
 - ✅ Bulk edit updates correctly
@@ -1626,26 +805,15 @@ Create `resources/views/time-entries/bulk-edit.blade.php`:
 
 ### Week 1 (Jan 27 - Jan 31)
 - ✅ **Days 1-4**: Dark Mode (complete feature)
-- ✅ **Days 5**: Start Keyboard Shortcuts
-
-### Week 2 (Feb 3 - Feb 7)
-- ✅ **Days 1-4**: Complete Keyboard Shortcuts
-- ✅ **Days 5**: Start Timer Notifications
-
-### Week 3 (Feb 10 - Feb 14)
-- ✅ **Days 1-3**: Complete Timer Notifications
 - ✅ **Days 4-5**: Start Calendar View
 
-### Week 4 (Feb 17 - Feb 21)
+### Week 2 (Feb 3 - Feb 7)
 - ✅ **Days 1-5**: Complete Calendar View
 
-### Week 5 (Feb 24 - Feb 28)
-- ✅ **Days 1-5**: Time Entry Templates
-
-### Week 6 (Mar 3 - Mar 7)
+### Week 3 (Feb 10 - Feb 14)
 - ✅ **Days 1-5**: Bulk Operations
 
-### Week 7 (Mar 10 - Mar 14)
+### Week 4 (Feb 17 - Feb 21)
 - ✅ **Days 1-3**: Testing & bug fixes
 - ✅ **Days 4-5**: Documentation & polish
 
@@ -1694,16 +862,13 @@ Track these metrics to measure Phase 5 success:
 
 ### Usage Metrics
 - [ ] **Dark mode adoption**: 40%+ of users enable it
-- [ ] **Keyboard shortcut usage**: 15%+ of power users
 - [ ] **Calendar views**: 3+ views per user per week
-- [ ] **Template usage**: 25%+ of entries created from templates
 - [ ] **Bulk operations**: 10%+ of deletions are bulk
 
 ### Performance Metrics
 - [ ] **Page load time**: <2 seconds (95th percentile)
 - [ ] **Time to interactive**: <3 seconds
 - [ ] **Calendar render**: <500ms
-- [ ] **Notification latency**: <1 second
 
 ### Quality Metrics
 - [ ] **Test coverage**: >85%
@@ -1722,21 +887,7 @@ Track these metrics to measure Phase 5 success:
 - Review all pages systematically
 - Use browser DevTools to toggle dark class
 
-### 2. Keyboard Shortcuts - Conflicts
-**Challenge**: Shortcuts conflicting with browser/OS defaults  
-**Mitigation**:
-- Use Ctrl/Cmd modifier for all shortcuts
-- Allow shortcuts to be disabled
-- Detect and skip when in input fields
-
-### 3. Notifications - Permission Denial
-**Challenge**: Users deny notification permissions  
-**Mitigation**:
-- Graceful degradation (show in-app alerts)
-- Clear explanation before requesting
-- Settings to re-request permission
-
-### 4. Calendar - Performance with Many Entries
+### 2. Calendar - Performance with Many Entries
 **Challenge**: Slow rendering with 1000+ entries per month  
 **Mitigation**:
 - Lazy load events (fetch only visible range)
@@ -1744,14 +895,7 @@ Track these metrics to measure Phase 5 success:
 - Add loading indicators
 - Cache calendar data
 
-### 5. Templates - Data Duplication
-**Challenge**: Templates become outdated when projects change  
-**Mitigation**:
-- Store only template name + references
-- Fetch project details on-demand
-- Show warning if project deleted
-
-### 6. Bulk Operations - Accidental Deletions
+### 3. Bulk Operations - Accidental Deletions
 **Challenge**: Users accidentally bulk delete important entries  
 **Mitigation**:
 - Require confirmation

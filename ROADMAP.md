@@ -212,7 +212,7 @@ This is the official development roadmap for **Timeshit**, _the Laravel Time Tra
 
 ### Phase 5: Polish & UX (Q1 2026) - 6-8 weeks
 **Focus**: Improve existing features, make app delightful
-- [ ] Dark mode toggle
+- ✅ Dark mode toggle
 - [ ] Keyboard shortcuts
 - [ ] Timer notifications
 - [ ] Calendar view of entries
