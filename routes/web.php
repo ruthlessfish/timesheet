@@ -19,6 +19,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('clients', ClientController::class);
     Route::resource('projects', ProjectController::class);
+
+    // Time entry bulk operations (must be before resource routes)
+    Route::post('/time-entries/bulk-delete', [TimeEntryController::class, 'bulkDelete'])->name('time-entries.bulk-delete');
+    Route::get('/time-entries/bulk-edit', [TimeEntryController::class, 'bulkEditForm'])->name('time-entries.bulk-edit');
+    Route::patch('/time-entries/bulk-update', [TimeEntryController::class, 'bulkUpdate'])->name('time-entries.bulk-update');
+
     Route::resource('time-entries', TimeEntryController::class);
     Route::resource('invoices', InvoiceController::class);
 

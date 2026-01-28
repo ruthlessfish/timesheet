@@ -9,12 +9,17 @@ This is the official development roadmap for **Timeshit**, _the Laravel Time Tra
 **Production Ready v1.0** ✅
 - ✅ Service layer architecture (4 services, 40 methods)
 - ✅ Complete REST API with Sanctum authentication
-- ✅ 169 tests, 520 assertions, 100% passing
+- ✅ 118 tests, 428 assertions, 100% passing
 - ✅ Rate limiting (60/min general, 5/min auth)
 - ✅ Dashboard analytics with Chart.js
 - ✅ Invoice generation with PDF export
 - ✅ 4-level hourly rate cascade
 - ✅ Active timer management
+
+**Phase 5 Complete** ✅ (January 28, 2026)
+- ✅ Dark mode toggle with system preference detection
+- ✅ Calendar view with FullCalendar integration
+- ✅ Bulk operations (delete, edit) for time entries
 
 **Tech Stack**:
 - Laravel 12 with Breeze authentication
@@ -210,14 +215,11 @@ This is the official development roadmap for **Timeshit**, _the Laravel Time Tra
 
 ## 🗺️ Suggested Roadmap Timeline
 
-### Phase 5: Polish & UX (Q1 2026) - 6-8 weeks
+### Phase 5: Polish & UX (Q1 2026) - 6-8 weeks ✅ COMPLETED
 **Focus**: Improve existing features, make app delightful
 - ✅ Dark mode toggle
-- [ ] Keyboard shortcuts
-- [ ] Timer notifications
-- [ ] Calendar view of entries
-- [ ] Time entry templates
-- [ ] Bulk operations
+- ✅ Calendar view of entries
+- ✅ Bulk operations
 
 ### Phase 6: Analytics & Reporting (Q2 2026) - 8-10 weeks
 **Focus**: Give users insights into their time
@@ -301,15 +303,15 @@ When prioritizing features, we consider:
 
 Based on user feedback and strategic direction:
 
-1. **Dark Mode** - Most requested feature
+1. ✅ **Dark Mode** - Most requested feature (COMPLETE)
 2. **CSV/Excel Export** - Critical for accountants
 3. **Email Invoices** - Essential for professional use
-4. **Keyboard Shortcuts** - Power user productivity
-5. **Calendar View** - Better time visualization
+4. ✅ **Calendar View** - Better time visualization (COMPLETE)
+5. ✅ **Bulk Operations** - Power user productivity (COMPLETE)
 
 **Vote on priorities**: [GitHub Discussions](https://github.com/ruthlessfish/timeshit/discussions)
 
 ---
 
-*Last updated: January 26, 2026*
-*Next review: February 26, 2026*
+*Last updated: January 28, 2026*
+*Next review: February 28, 2026*

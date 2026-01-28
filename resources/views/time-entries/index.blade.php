@@ -103,12 +103,46 @@
             </div>
 
             <!-- Time Entries List -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg" x-data="bulkSelector()">
+                <!-- Bulk Actions Toolbar -->
+                <div x-show="selectedIds.length > 0" 
+                     x-transition
+                     class="bg-indigo-50 dark:bg-indigo-900/20 border-b-2 border-indigo-200 dark:border-indigo-800 p-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-indigo-700 dark:text-indigo-300 font-medium">
+                            <span x-text="selectedIds.length"></span> item(s) selected
+                        </span>
+                        
+                        <div class="flex items-center space-x-3">
+                            <button @click="bulkEdit()" 
+                                    class="px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm font-medium transition">
+                                Edit Selected
+                            </button>
+                            
+                            <button @click="bulkDelete()" 
+                                    class="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium transition">
+                                Delete Selected
+                            </button>
+                            
+                            <button @click="clearSelection()" 
+                                    class="px-3 py-1.5 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 text-sm font-medium transition">
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="p-6">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-900">
                                 <tr>
+                                    <th class="px-6 py-3">
+                                        <input type="checkbox" 
+                                               @change="toggleAll($event.target.checked)"
+                                               :checked="selectedIds.length > 0 && selectedIds.length === {{ $timeEntries->count() }}"
+                                               class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                                    </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Client / Project</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
@@ -120,7 +154,13 @@
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 @forelse($timeEntries as $entry)
-                                <tr>
+                                <tr :class="selectedIds.includes({{ $entry->id }}) ? 'bg-indigo-50 dark:bg-indigo-900/10' : ''">
+                                    <td class="px-6 py-4">
+                                        <input type="checkbox" 
+                                               :checked="selectedIds.includes({{ $entry->id }})"
+                                               @change="toggleSelection({{ $entry->id }})"
+                                               class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                         {{ $entry->start_time->format('M d, Y') }}
                                         <br>
@@ -169,7 +209,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                    <td colspan="8" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                                         No time entries found. <a href="{{ route('time-entries.create') }}" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">Add your first time entry</a>
                                     </td>
                                 </tr>
@@ -182,6 +222,65 @@
                         {{ $timeEntries->links() }}
                     </div>
                 </div>
+                
+                <script>
+                function bulkSelector() {
+                    return {
+                        selectedIds: [],
+                        
+                        toggleSelection(id) {
+                            const index = this.selectedIds.indexOf(id);
+                            if (index === -1) {
+                                this.selectedIds.push(id);
+                            } else {
+                                this.selectedIds.splice(index, 1);
+                            }
+                        },
+                        
+                        toggleAll(checked) {
+                            if (checked) {
+                                this.selectedIds = @json($timeEntries->pluck('id')->toArray());
+                            } else {
+                                this.selectedIds = [];
+                            }
+                        },
+                        
+                        clearSelection() {
+                            this.selectedIds = [];
+                        },
+                        
+                        bulkDelete() {
+                            if (!confirm(`Delete ${this.selectedIds.length} time entries? This action cannot be undone.`)) return;
+                            
+                            fetch('{{ route("time-entries.bulk-delete") }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                },
+                                body: JSON.stringify({ ids: this.selectedIds })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.error) {
+                                    alert(data.error);
+                                } else {
+                                    window.location.reload();
+                                }
+                            })
+                            .catch(error => {
+                                alert('An error occurred while deleting entries.');
+                                console.error(error);
+                            });
+                        },
+                        
+                        bulkEdit() {
+                            const idsParam = this.selectedIds.join(',');
+                            window.location.href = `{{ route('time-entries.bulk-edit') }}?ids=${idsParam}`;
+                        }
+                    }
+                }
+                </script>
             </div>
         </div>
     </div>
