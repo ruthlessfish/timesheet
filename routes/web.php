@@ -26,6 +26,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/time-entries/bulk-edit', [TimeEntryController::class, 'bulkEditForm'])->name('time-entries.bulk-edit');
     Route::patch('/time-entries/bulk-update', [TimeEntryController::class, 'bulkUpdate'])->name('time-entries.bulk-update');
 
+    // Time entry CSV import (must be before resource routes)
+    Route::get('/time-entries/import/form', [TimeEntryController::class, 'importForm'])->name('time-entries.import-form');
+    Route::post('/time-entries/import', [TimeEntryController::class, 'import'])->name('time-entries.import');
+    Route::get('/time-entries/import/template', [TimeEntryController::class, 'downloadTemplate'])->name('time-entries.import-template');
+
     Route::resource('time-entries', TimeEntryController::class);
     Route::resource('invoices', InvoiceController::class);
 

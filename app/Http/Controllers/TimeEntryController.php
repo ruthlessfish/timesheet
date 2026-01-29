@@ -267,4 +267,146 @@ class TimeEntryController extends Controller
         return redirect()->route('time-entries.index')
             ->with('success', "Successfully updated {$updated} time entries.");
     }
+
+    /**
+     * Show the CSV import form.
+     */
+    public function importForm()
+    {
+        $projects = auth()->user()->projects()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return view('time-entries.import', compact('projects'));
+    }
+
+    /**
+     * Import time entries from CSV.
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+        ]);
+
+        $file = $request->file('csv_file');
+        $handle = fopen($file->getRealPath(), 'r');
+
+        // Skip header row
+        $header = fgetcsv($handle);
+
+        $imported = 0;
+        $errors = [];
+        $row = 1; // Start at 1 since we skipped header
+
+        while (($data = fgetcsv($handle)) !== false) {
+            $row++;
+
+            try {
+                // Expected CSV format: project_name, description, start_time, end_time, hourly_rate, is_billable
+                if (count($data) < 4) {
+                    $errors[] = "Row {$row}: Not enough columns";
+
+                    continue;
+                }
+
+                [$projectName, $description, $startTime, $endTime, $hourlyRate, $isBillable] = array_pad($data, 6, null);
+
+                // Find project by name
+                $project = auth()->user()->projects()
+                    ->where('name', trim($projectName))
+                    ->first();
+
+                if (! $project) {
+                    $errors[] = "Row {$row}: Project '{$projectName}' not found";
+
+                    continue;
+                }
+
+                // Parse dates
+                $startTimeParsed = \Carbon\Carbon::parse($startTime);
+                $endTimeParsed = $endTime ? \Carbon\Carbon::parse($endTime) : null;
+
+                // Validate end time is after start time
+                if ($endTimeParsed && $endTimeParsed->lte($startTimeParsed)) {
+                    $errors[] = "Row {$row}: End time must be after start time";
+
+                    continue;
+                }
+
+                // Create time entry
+                $this->timeEntryService->createManualEntry(
+                    userId: auth()->id(),
+                    data: [
+                        'project_id' => $project->id,
+                        'description' => trim($description) ?: null,
+                        'start_time' => $startTimeParsed,
+                        'end_time' => $endTimeParsed,
+                        'hourly_rate' => $hourlyRate ? (float) $hourlyRate : null,
+                        'is_billable' => in_array(strtolower(trim($isBillable ?? '1')), ['1', 'true', 'yes']),
+                    ]
+                );
+
+                $imported++;
+            } catch (\Exception $e) {
+                $errors[] = "Row {$row}: ".$e->getMessage();
+            }
+        }
+
+        fclose($handle);
+
+        if ($imported > 0 && empty($errors)) {
+            return redirect()->route('time-entries.index')
+                ->with('success', "Successfully imported {$imported} time entries.");
+        } elseif ($imported > 0 && ! empty($errors)) {
+            return redirect()->route('time-entries.index')
+                ->with('warning', "Imported {$imported} time entries with ".count($errors).' errors.')
+                ->with('import_errors', $errors);
+        } else {
+            return back()
+                ->with('error', 'No time entries were imported.')
+                ->with('import_errors', $errors);
+        }
+    }
+
+    /**
+     * Download a CSV template.
+     */
+    public function downloadTemplate()
+    {
+        $filename = 'time_entries_template.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function () {
+            $handle = fopen('php://output', 'w');
+
+            // Write header
+            fputcsv($handle, [
+                'project_name',
+                'description',
+                'start_time',
+                'end_time',
+                'hourly_rate',
+                'is_billable',
+            ]);
+
+            // Write example row
+            fputcsv($handle, [
+                'Example Project',
+                'Working on feature X',
+                now()->subHours(2)->format('Y-m-d H:i:s'),
+                now()->format('Y-m-d H:i:s'),
+                '100.00',
+                'yes',
+            ]);
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }
