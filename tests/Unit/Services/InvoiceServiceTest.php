@@ -138,11 +138,9 @@ class InvoiceServiceTest extends TestCase
             'amount' => 200,
         ]);
 
-        $updated = $this->invoiceService->updateTotals($invoice);
-
-        $this->assertEquals(200, $updated->subtotal);
-        $this->assertEquals(0, $updated->tax_amount);
-        $this->assertEquals(200, $updated->total);
+        $this->assertEquals(200, $invoice->subtotal);
+        $this->assertEquals(0, $invoice->tax_amount);
+        $this->assertEquals(200, $invoice->total);
     }
 
     public function test_updates_invoice_data()

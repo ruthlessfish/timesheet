@@ -51,9 +51,6 @@ class InvoiceService
             $this->billingService->markAsInvoiced($timeEntries);
         }
 
-        // Calculate and save totals
-        $this->updateTotals($invoice);
-
         return $invoice->fresh(['client', 'items']);
     }
 
@@ -74,17 +71,6 @@ class InvoiceService
             'rate' => $rate,
             'amount' => $amount,
         ]);
-    }
-
-    /**
-     * Update invoice totals
-     */
-    public function updateTotals(Invoice $invoice): Invoice
-    {
-        $invoice->calculateTotals();
-        $invoice->save();
-
-        return $invoice->fresh();
     }
 
     /**

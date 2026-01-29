@@ -66,14 +66,10 @@ class InvoiceTest extends TestCase
             'amount' => 150,
         ]);
 
-        $invoice->refresh(); // Refresh to load the items relationship
-        $invoice->calculateTotals();
-        $invoice->save();
-        $invoice->refresh(); // Refresh again to get updated values
-
         $this->assertEquals(250.00, $invoice->subtotal);
         $this->assertEquals(0.00, $invoice->tax_amount);
         $this->assertEquals(250.00, $invoice->total);
+        $this->assertEquals(2, $invoice->total_hours);
     }
 
     #[Test]
@@ -94,14 +90,10 @@ class InvoiceTest extends TestCase
             'amount' => 100,
         ]);
 
-        $invoice->refresh(); // Refresh to load the items relationship
-        $invoice->calculateTotals();
-        $invoice->save();
-        $invoice->refresh(); // Refresh again to get updated values
-
         $this->assertEquals(100.00, $invoice->subtotal);
         $this->assertEquals(10.00, $invoice->tax_amount);
         $this->assertEquals(110.00, $invoice->total);
+        $this->assertEquals(1, $invoice->total_hours);
     }
 
     #[Test]

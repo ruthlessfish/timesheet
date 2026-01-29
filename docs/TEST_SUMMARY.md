@@ -22,7 +22,6 @@ Located in `tests/Unit/Models/`
 - ✅ **Auto-generated invoice numbers** (INV-YYYY-0001 format)
 - ✅ Sequential numbering within year
 - ✅ Manual invoice number preservation
-- ✅ `calculateTotals()` with/without tax
 - ✅ Relationship validation (belongs to client, has many items)
 - ✅ Type casting (dates, decimals)
 

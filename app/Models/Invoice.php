@@ -60,10 +60,23 @@ class Invoice extends Model
         return $this->hasMany(InvoiceItem::class);
     }
 
-    public function calculateTotals(): void
+    public function getSubTotalAttribute(): float
     {
-        $this->subtotal = $this->items()->sum('amount');
-        $this->tax_amount = $this->subtotal * ($this->tax_rate / 100);
-        $this->total = $this->subtotal + $this->tax_amount;
+        return $this->items()->sum('amount');
+    }
+
+    public function getTaxAmountAttribute(): float
+    {
+        return $this->subtotal * ($this->tax_rate / 100);
+    }
+
+    public function getTotalAttribute(): float
+    {
+        return $this->subtotal + $this->tax_amount;
+    }
+
+    public function getTotalHoursAttribute(): float
+    {
+        return $this->items()->sum('quantity');
     }
 }
