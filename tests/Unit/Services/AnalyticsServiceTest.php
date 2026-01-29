@@ -17,12 +17,13 @@ class AnalyticsServiceTest extends TestCase
     use RefreshDatabase;
 
     private AnalyticsService $analyticsService;
+
     private BillingService $billingService;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->billingService = new BillingService();
+        $this->billingService = new BillingService;
         $this->analyticsService = new AnalyticsService($this->billingService);
     }
 
@@ -163,17 +164,17 @@ class AnalyticsServiceTest extends TestCase
     {
         $user = User::factory()->create();
         $client = Client::factory()->for($user)->create();
-        
+
         $project1 = Project::factory()->for($client)->for($user)->create(['name' => 'Project A']);
         $project2 = Project::factory()->for($client)->for($user)->create(['name' => 'Project B']);
         $project3 = Project::factory()->for($client)->for($user)->create(['name' => 'Project C']);
 
         // Project A: 5 hours
         TimeEntry::factory()->for($project1)->for($user)->create(['duration' => 300]);
-        
+
         // Project B: 3 hours
         TimeEntry::factory()->for($project2)->for($user)->create(['duration' => 180]);
-        
+
         // Project C: 1 hour
         TimeEntry::factory()->for($project3)->for($user)->create(['duration' => 60]);
 
@@ -224,7 +225,7 @@ class AnalyticsServiceTest extends TestCase
     public function test_gets_revenue_by_client()
     {
         $user = User::factory()->create();
-        
+
         $client1 = Client::factory()->for($user)->create([
             'name' => 'Client A',
             'hourly_rate' => 100,
@@ -264,7 +265,7 @@ class AnalyticsServiceTest extends TestCase
         $this->assertEquals('Client B', $revenue[0]['client_name']);
         $this->assertEquals(3, $revenue[0]['hours']);
         $this->assertEquals(450, $revenue[0]['revenue']);
-        
+
         $this->assertEquals('Client A', $revenue[1]['client_name']);
         $this->assertEquals(2, $revenue[1]['hours']);
         $this->assertEquals(200, $revenue[1]['revenue']);
@@ -334,7 +335,7 @@ class AnalyticsServiceTest extends TestCase
     public function test_gets_average_hourly_rate()
     {
         $user = User::factory()->create();
-        
+
         $client1 = Client::factory()->for($user)->create(['hourly_rate' => 100]);
         $client2 = Client::factory()->for($user)->create(['hourly_rate' => 150]);
 

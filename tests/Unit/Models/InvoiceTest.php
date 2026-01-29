@@ -18,7 +18,7 @@ class InvoiceTest extends TestCase
         $invoice = Invoice::factory()->create();
 
         $this->assertNotNull($invoice->invoice_number);
-        $this->assertStringStartsWith('INV-' . date('Y') . '-', $invoice->invoice_number);
+        $this->assertStringStartsWith('INV-'.date('Y').'-', $invoice->invoice_number);
     }
 
     #[Test]
@@ -27,8 +27,8 @@ class InvoiceTest extends TestCase
         $invoice1 = Invoice::factory()->create();
         $invoice2 = Invoice::factory()->create();
 
-        $this->assertEquals('INV-' . date('Y') . '-0001', $invoice1->invoice_number);
-        $this->assertEquals('INV-' . date('Y') . '-0002', $invoice2->invoice_number);
+        $this->assertEquals('INV-'.date('Y').'-0001', $invoice1->invoice_number);
+        $this->assertEquals('INV-'.date('Y').'-0002', $invoice2->invoice_number);
     }
 
     #[Test]

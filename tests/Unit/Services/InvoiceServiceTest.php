@@ -18,12 +18,13 @@ class InvoiceServiceTest extends TestCase
     use RefreshDatabase;
 
     private InvoiceService $invoiceService;
+
     private BillingService $billingService;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->billingService = new BillingService();
+        $this->billingService = new BillingService;
         $this->invoiceService = new InvoiceService($this->billingService);
     }
 
@@ -65,7 +66,7 @@ class InvoiceServiceTest extends TestCase
         $this->assertEquals($client->id, $invoice->client_id);
         $this->assertEquals(10, $invoice->tax_rate);
         $this->assertCount(2, $invoice->items);
-        
+
         // Verify totals
         $this->assertEquals(300, $invoice->subtotal); // (1 + 2) * 100
         $this->assertEquals(30, $invoice->tax_amount); // 300 * 0.10

@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
-use App\Models\Traits\HasStatus;
 
 class Project extends Model
 {
@@ -67,7 +66,7 @@ class Project extends Model
         if (is_null($this->budget)) {
             return false;
         }
+
         return $this->total_amount > $this->budget;
     }
-
 }

@@ -2,25 +2,25 @@
 
 namespace App\Policies;
 
-use App\Models\Project;
+use App\Models\Company;
 use App\Models\User;
 
-class ProjectPolicy
+class CompanyPolicy
 {
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return false;
     }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Project $project): bool
+    public function view(User $user, Company $company): bool
     {
-        return $user->id === $project->user_id;
+        return $user->id === $company->user_id;
     }
 
     /**
@@ -28,38 +28,38 @@ class ProjectPolicy
      */
     public function create(User $user): bool
     {
-        return true;
+        return false;
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Project $project): bool
+    public function update(User $user, Company $company): bool
     {
-        return $user->id === $project->user_id;
+        return $user->id === $company->user_id;
     }
 
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Project $project): bool
+    public function delete(User $user, Company $company): bool
     {
-        return $user->id === $project->user_id;
+        return $user->id === $company->user_id;
     }
 
     /**
      * Determine whether the user can restore the model.
      */
-    public function restore(User $user, Project $project): bool
+    public function restore(User $user, Company $company): bool
     {
-        return $user->id === $project->user_id;
+        return false;
     }
 
     /**
      * Determine whether the user can permanently delete the model.
      */
-    public function forceDelete(User $user, Project $project): bool
+    public function forceDelete(User $user, Company $company): bool
     {
-        return $user->id === $project->user_id;
+        return false;
     }
 }

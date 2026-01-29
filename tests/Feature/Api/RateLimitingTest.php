@@ -18,7 +18,7 @@ class RateLimitingTest extends TestCase
         for ($i = 0; $i < 60; $i++) {
             $response = $this->actingAs($user, 'sanctum')
                 ->getJson('/api/v1/user');
-            
+
             $response->assertStatus(200);
         }
 
@@ -37,7 +37,7 @@ class RateLimitingTest extends TestCase
                 'email' => 'test@example.com',
                 'password' => 'wrong-password',
             ]);
-            
+
             // Will fail auth, but not rate limited yet
             $this->assertContains($response->status(), [401, 422]);
         }
@@ -60,7 +60,7 @@ class RateLimitingTest extends TestCase
         for ($i = 0; $i < 60; $i++) {
             $response = $this->actingAs($user1, 'sanctum')
                 ->getJson('/api/v1/user');
-            
+
             $response->assertStatus(200);
         }
 

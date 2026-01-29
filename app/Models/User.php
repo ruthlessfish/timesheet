@@ -70,6 +70,19 @@ class User extends Authenticatable
         return $this->hasMany(Invoice::class);
     }
 
+    public function companies(): HasMany
+    {
+        return $this->hasMany(Company::class);
+    }
+
+    /**
+     * Get the user's default company.
+     */
+    public function defaultCompany(): ?Company
+    {
+        return $this->companies()->where('is_default', true)->first();
+    }
+
     public function getGravatarAttribute()
     {
         $cacheKey = 'gravatar_'.md5($this->email);

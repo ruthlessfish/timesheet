@@ -10,10 +10,11 @@ use Illuminate\Http\Request;
 class InvoiceController extends Controller
 {
     use AuthorizesRequests;
-    
+
     public function __construct(
         private InvoiceService $invoiceService
     ) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -23,7 +24,7 @@ class InvoiceController extends Controller
             ->with('client')
             ->orderBy('issue_date', 'desc')
             ->paginate(15);
-            
+
         return view('invoices.index', compact('invoices'));
     }
 
@@ -36,7 +37,7 @@ class InvoiceController extends Controller
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
-        
+
         // Get unbilled time entries if client is selected
         $unbilledTimeEntries = collect();
         if ($request->has('client_id')) {
@@ -45,7 +46,7 @@ class InvoiceController extends Controller
                 auth()->id()
             );
         }
-            
+
         return view('invoices.create', compact('clients', 'unbilledTimeEntries'));
     }
 
@@ -64,14 +65,14 @@ class InvoiceController extends Controller
             'time_entries' => 'nullable|array',
             'time_entries.*' => 'exists:time_entries,id',
         ]);
-        
+
         $invoice = $this->invoiceService->createFromTimeEntries(
             userId: auth()->id(),
             clientId: $validated['client_id'],
             timeEntryIds: $validated['time_entries'] ?? [],
             data: $validated
         );
-        
+
         return redirect()->route('invoices.show', $invoice)
             ->with('success', 'Invoice created successfully.');
     }
@@ -82,9 +83,9 @@ class InvoiceController extends Controller
     public function show(Invoice $invoice)
     {
         $this->authorize('view', $invoice);
-        
+
         $invoice->load(['client', 'items.timeEntry']);
-        
+
         return view('invoices.show', compact('invoice'));
     }
 
@@ -94,14 +95,14 @@ class InvoiceController extends Controller
     public function edit(Invoice $invoice)
     {
         $this->authorize('update', $invoice);
-        
+
         $clients = auth()->user()->clients()
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
-        
+
         $invoice->load('items');
-            
+
         return view('invoices.edit', compact('invoice', 'clients'));
     }
 
@@ -111,7 +112,7 @@ class InvoiceController extends Controller
     public function update(Request $request, Invoice $invoice)
     {
         $this->authorize('update', $invoice);
-        
+
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
             'issue_date' => 'required|date',
@@ -120,9 +121,9 @@ class InvoiceController extends Controller
             'notes' => 'nullable|string',
             'status' => 'required|in:draft,sent,paid,overdue,cancelled',
         ]);
-        
+
         $this->invoiceService->updateInvoice($invoice, $validated);
-        
+
         return redirect()->route('invoices.show', $invoice)
             ->with('success', 'Invoice updated successfully.');
     }
@@ -133,24 +134,24 @@ class InvoiceController extends Controller
     public function destroy(Invoice $invoice)
     {
         $this->authorize('delete', $invoice);
-        
+
         $this->invoiceService->deleteInvoice($invoice);
-        
+
         return redirect()->route('invoices.index')
             ->with('success', 'Invoice deleted successfully.');
     }
-    
+
     /**
      * Generate PDF for the invoice.
      */
     public function pdf(Invoice $invoice)
     {
         $this->authorize('view', $invoice);
-        
+
         $invoice->load(['client', 'items', 'user']);
-        
+
         $pdf = $this->invoiceService->generatePDF($invoice);
-        
-        return $pdf->download('invoice-' . $invoice->invoice_number . '.pdf');
+
+        return $pdf->download('invoice-'.$invoice->invoice_number.'.pdf');
     }
 }

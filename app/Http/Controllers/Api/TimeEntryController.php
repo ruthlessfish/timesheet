@@ -23,23 +23,23 @@ class TimeEntryController extends Controller
     public function index(Request $request)
     {
         $filters = [];
-        
+
         if ($request->has('project_id')) {
             $filters['project_id'] = $request->project_id;
         }
-        
+
         if ($request->has('start_date')) {
             $filters['start_date'] = $request->start_date;
         }
-        
+
         if ($request->has('end_date')) {
             $filters['end_date'] = $request->end_date;
         }
-        
+
         if ($request->has('is_billable')) {
             $filters['is_billable'] = $request->boolean('is_billable');
         }
-        
+
         if ($request->has('is_invoiced')) {
             $filters['is_invoiced'] = $request->boolean('is_invoiced');
         }
@@ -56,7 +56,7 @@ class TimeEntryController extends Controller
     {
         $activeTimer = $this->timeEntryService->getActiveTimer(auth()->id());
 
-        if (!$activeTimer) {
+        if (! $activeTimer) {
             return response()->json([
                 'message' => 'No active timer',
             ], 404);

@@ -19,7 +19,7 @@ class DashboardController extends Controller
     public function stats(Request $request)
     {
         $user = auth()->user();
-        
+
         $stats = $this->analyticsService->getDashboardStats($user->id);
 
         return response()->json($stats);
@@ -31,10 +31,10 @@ class DashboardController extends Controller
     public function charts(Request $request)
     {
         $user = auth()->user();
-        
+
         $days = $request->input('days', 7);
         $projectLimit = $request->input('project_limit', 5);
-        
+
         $startOfMonth = Carbon::now()->startOfMonth();
         $endOfMonth = Carbon::now()->endOfMonth();
 

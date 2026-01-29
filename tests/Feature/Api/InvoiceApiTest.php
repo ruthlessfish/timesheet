@@ -15,12 +15,13 @@ class InvoiceApiTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private string $token;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->user = User::factory()->create();
         $this->token = $this->user->createToken('test-token')->plainTextToken;
     }
@@ -30,7 +31,7 @@ class InvoiceApiTest extends TestCase
     {
         Invoice::factory()->create(['user_id' => $this->user->id]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->getJson('/api/v1/invoices');
 
         $response->assertOk();
@@ -59,7 +60,7 @@ class InvoiceApiTest extends TestCase
             'user_id' => $this->user->id,
             'client_id' => $client->id,
         ]);
-        
+
         $timeEntry = TimeEntry::factory()->create([
             'user_id' => $this->user->id,
             'project_id' => $project->id,
@@ -67,7 +68,7 @@ class InvoiceApiTest extends TestCase
             'is_invoiced' => false,
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->postJson('/api/v1/invoices', [
                 'client_id' => $client->id,
                 'issue_date' => now()->toDateString(),
@@ -97,7 +98,7 @@ class InvoiceApiTest extends TestCase
             'user_id' => $this->user->id,
             'client_id' => $client->id,
         ]);
-        
+
         $unbilledEntry = TimeEntry::factory()->create([
             'user_id' => $this->user->id,
             'project_id' => $project->id,
@@ -105,7 +106,7 @@ class InvoiceApiTest extends TestCase
             'is_invoiced' => false,
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->getJson("/api/v1/clients/{$client->id}/unbilled-entries");
 
         $response->assertOk();
@@ -126,7 +127,7 @@ class InvoiceApiTest extends TestCase
         $otherUser = User::factory()->create();
         $invoice = Invoice::factory()->create(['user_id' => $otherUser->id]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->getJson("/api/v1/invoices/{$invoice->id}");
 
         $response->assertStatus(403);
@@ -141,7 +142,7 @@ class InvoiceApiTest extends TestCase
             'client_id' => $client->id,
         ]);
 
-        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+        $response = $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->deleteJson("/api/v1/invoices/{$invoice->id}");
 
         $response->assertOk();

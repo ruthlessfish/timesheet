@@ -128,6 +128,6 @@ class InvoiceController extends Controller
 
         $pdf = $this->invoiceService->generatePDF($invoice);
 
-        return $pdf->download('invoice-' . $invoice->invoice_number . '.pdf');
+        return $pdf->download('invoice-'.$invoice->invoice_number.'.pdf');
     }
 }

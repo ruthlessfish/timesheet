@@ -41,9 +41,9 @@ class InvoiceItemFactory extends Factory
     public function forTimeEntry(TimeEntry $timeEntry): static
     {
         $hours = $timeEntry->duration / 60;
-        $rate = $timeEntry->hourly_rate 
-            ?? $timeEntry->project->hourly_rate 
-            ?? $timeEntry->project->client->hourly_rate 
+        $rate = $timeEntry->hourly_rate
+            ?? $timeEntry->project->hourly_rate
+            ?? $timeEntry->project->client->hourly_rate
             ?? 0;
 
         return $this->state(fn (array $attributes) => [

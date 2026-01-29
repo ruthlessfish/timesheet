@@ -19,7 +19,7 @@ class BillingServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->billingService = new BillingService();
+        $this->billingService = new BillingService;
     }
 
     public function test_resolves_rate_from_time_entry()
@@ -134,11 +134,11 @@ class BillingServiceTest extends TestCase
         $entry1 = TimeEntry::factory()->for($project)->for($user)->create([
             'hourly_rate' => null,
             'duration' => 60,  // 1 hour
-        ]); 
+        ]);
         $entry2 = TimeEntry::factory()->for($project)->for($user)->create([
             'hourly_rate' => null,
             'duration' => 120, // 2 hours
-        ]); 
+        ]);
 
         $entries = collect([$entry1, $entry2]);
         $total = $this->billingService->calculateTotalAmount($entries);

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class TimeEntry extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'user_id',
         'project_id',
@@ -62,6 +62,7 @@ class TimeEntry extends Model
     public function getAmountAttribute(): float
     {
         $rate = $this->hourly_rate ?? $this->project->hourly_rate ?? $this->project->client->hourly_rate ?? 0;
+
         return ($this->duration / 60) * $rate;
     }
 }

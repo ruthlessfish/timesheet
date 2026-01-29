@@ -76,7 +76,7 @@ class ThemePreferenceTest extends TestCase
 
         // Simulate new session - logout and login
         $this->post('/logout');
-        
+
         // Login again
         $this->post('/login', [
             'email' => $user->email,
@@ -85,7 +85,7 @@ class ThemePreferenceTest extends TestCase
 
         // Fresh user instance from database
         $freshUser = User::find($user->id);
-        
+
         $this->assertEquals('dark', $freshUser->theme_preference);
     }
 
@@ -116,7 +116,7 @@ class ThemePreferenceTest extends TestCase
 
         // Verify response is successful (redirect)
         $response->assertStatus(302);
-        
+
         // Verify database updated immediately
         $user->refresh();
         $this->assertEquals('dark', $user->theme_preference);

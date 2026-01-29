@@ -18,11 +18,12 @@ class AnalyticsService
 
     /**
      * Get dashboard statistics for a user
-     * 
+     *
      * @return array<string, mixed>
+     * @return array<string, mixed>
+     *
      * @throws ModelNotFoundException
      * @throws \Exception
-     * @return array<string, mixed> 
      */
     public function getDashboardStats(int $userId): array
     {
@@ -38,34 +39,26 @@ class AnalyticsService
 
     /**
      * Get total active clients for a user
-     * 
-     * @param int $userId
-     * @return int
      */
     public function getTotalClients(int $userId): int
     {
         $user = User::findOrFail($userId);
+
         return $user->clients()->where('is_active', true)->count();
     }
 
     /**
      * Get total active projects for a user
-     * 
-     * @param int $userId
-     * @return int
      */
     public function getActiveProjects(int $userId): int
     {
         $user = User::findOrFail($userId);
+
         return $user->projects()->where('status', 'active')->count();
     }
 
     /**
      * Get total hours worked this month
-     * 
-     * @param int $userId
-     * @param Carbon|null $month
-     * @return float
      */
     public function getMonthlyHours(int $userId, ?Carbon $month = null): float
     {
@@ -83,9 +76,6 @@ class AnalyticsService
 
     /**
      * Get total revenue for this month (billable entries only)
-     * @param int $userId
-     * @param Carbon|null $month
-     * @return float
      */
     public function getMonthlyRevenue(int $userId, ?Carbon $month = null): float
     {
@@ -105,8 +95,7 @@ class AnalyticsService
 
     /**
      * Get daily hours for the last N days
-     * @param int $userId
-     * @param int $days
+     *
      * @return Collection<int, float>
      */
     public function getDailyHoursTimeSeries(int $userId, int $days = 7): Collection
@@ -131,9 +120,7 @@ class AnalyticsService
 
     /**
      * Get hours breakdown by project (top N projects)
-     * 
-     * @param int $userId
-     * @param int $limit
+     *
      * @return Collection<int, array{name: string, hours: float}>
      */
     public function getProjectHoursBreakdown(int $userId, int $limit = 5): Collection
@@ -156,10 +143,7 @@ class AnalyticsService
 
     /**
      * Get billable vs non-billable hours for a period
-     * 
-     * @param int $userId
-     * @param Carbon|null $startDate
-     * @param Carbon|null $endDate
+     *
      * @return array<string, float|int>
      */
     public function getBillableRatio(int $userId, ?Carbon $startDate = null, ?Carbon $endDate = null): array
@@ -194,10 +178,7 @@ class AnalyticsService
 
     /**
      * Get revenue breakdown by client for a period
-     * 
-     * @param int $userId
-     * @param Carbon|null $startDate
-     * @param Carbon|null $endDate
+     *
      * @return Collection<int, array{client_name: string, hours: float, revenue: float}>
      */
     public function getRevenueByClient(int $userId, ?Carbon $startDate = null, ?Carbon $endDate = null): Collection
@@ -215,6 +196,7 @@ class AnalyticsService
             ->get()
             ->map(function ($client) {
                 $timeEntries = $client->projects->flatMap->timeEntries;
+
                 return [
                     'client_name' => $client->name,
                     'hours' => $this->billingService->calculateTotalHours($timeEntries),
@@ -227,11 +209,8 @@ class AnalyticsService
 
     /**
      * Get time entries statistics for a date range
-     * 
-     * @param int $userId
-     * @param Carbon|null $startDate
-     * @param Carbon|null $endDate
-     * @return array<string, float|int> 
+     *
+     * @return array<string, float|int>
      */
     public function getTimeEntriesStats(int $userId, ?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
@@ -261,9 +240,6 @@ class AnalyticsService
 
     /**
      * Get average hourly rate across all projects
-     * 
-     * @param int $userId
-     * @return float
      */
     public function getAverageHourlyRate(int $userId): float
     {

@@ -3,7 +3,6 @@
 namespace Tests\Unit\Models;
 
 use App\Models\Client;
-use App\Models\InvoiceItem;
 use App\Models\Project;
 use App\Models\TimeEntry;
 use Illuminate\Foundation\Testing\RefreshDatabase;

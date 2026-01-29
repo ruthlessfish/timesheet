@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 class ClientController extends Controller
 {
     use AuthorizesRequests;
+
     /**
      * Display a listing of the resource.
      */
@@ -18,7 +19,7 @@ class ClientController extends Controller
             ->withCount('projects')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
-            
+
         return view('clients.index', compact('clients'));
     }
 
@@ -44,12 +45,12 @@ class ClientController extends Controller
             'hourly_rate' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
         ]);
-        
+
         $validated['user_id'] = auth()->id();
         $validated['is_active'] = $request->has('is_active');
-        
+
         Client::create($validated);
-        
+
         return redirect()->route('clients.index')
             ->with('success', 'Client created successfully.');
     }
@@ -60,24 +61,24 @@ class ClientController extends Controller
     public function show(Client $client)
     {
         $this->authorize('view', $client);
-        
+
         $client->load(['projects' => function ($query) {
             $query->withCount('timeEntries');
         }]);
-        
+
         $totalHours = $client->projects->sum(function ($project) {
             return $project->timeEntries->sum('duration') / 60;
         });
-        
+
         $totalRevenue = $client->invoices()
             ->where('status', 'paid')
             ->sum('total');
-        
+
         $recentInvoices = $client->invoices()
             ->orderBy('issue_date', 'desc')
             ->limit(5)
             ->get();
-        
+
         return view('clients.show', compact('client', 'totalHours', 'totalRevenue', 'recentInvoices'));
     }
 
@@ -87,7 +88,7 @@ class ClientController extends Controller
     public function edit(Client $client)
     {
         $this->authorize('update', $client);
-        
+
         return view('clients.edit', compact('client'));
     }
 
@@ -97,7 +98,7 @@ class ClientController extends Controller
     public function update(Request $request, Client $client)
     {
         $this->authorize('update', $client);
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
@@ -107,11 +108,11 @@ class ClientController extends Controller
             'hourly_rate' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
         ]);
-        
+
         $validated['is_active'] = $request->has('is_active');
-        
+
         $client->update($validated);
-        
+
         return redirect()->route('clients.index')
             ->with('success', 'Client updated successfully.');
     }
@@ -122,9 +123,9 @@ class ClientController extends Controller
     public function destroy(Client $client)
     {
         $this->authorize('delete', $client);
-        
+
         $client->delete();
-        
+
         return redirect()->route('clients.index')
             ->with('success', 'Client deleted successfully.');
     }

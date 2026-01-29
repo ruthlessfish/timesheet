@@ -155,6 +155,36 @@
         <table class="info-grid">
             <tr>
                 <td>
+                    @php
+                        $company = $invoice->user->defaultCompany();
+                    @endphp
+                    
+                    @if($company)
+                        <div class="info-title">From</div>
+                        <div class="info-content">
+                            <strong>{{ $company->name }}</strong><br>
+                            @if($company->address)
+                                {!! nl2br(e($company->address)) !!}<br>
+                            @endif
+                            @if($company->phone)
+                                Phone: {{ $company->phone }}<br>
+                            @endif
+                            @if($company->email)
+                                Email: {{ $company->email }}<br>
+                            @endif
+                            @if($company->website)
+                                Web: {{ $company->website }}
+                            @endif
+                        </div>
+                    @else
+                        <div class="info-title">From</div>
+                        <div class="info-content">
+                            <strong>{{ $invoice->user->name }}</strong><br>
+                            Email: {{ $invoice->user->email }}
+                        </div>
+                    @endif
+                </td>
+                <td>
                     <div class="info-title">Bill To</div>
                     <div class="info-content">
                         <strong>{{ $invoice->client->name }}</strong><br>
@@ -169,12 +199,21 @@
                         @endif
                     </div>
                 </td>
-                <td style="text-align: right;">
+            </tr>
+        </table>
+    </div>
+
+    <div class="info-section">
+        <table class="info-grid">
+            <tr>
+                <td>
                     <div class="info-title">Invoice Details</div>
                     <div class="info-content">
                         <strong>Issue Date:</strong> {{ $invoice->issue_date->format('M d, Y') }}<br>
                         <strong>Due Date:</strong> {{ $invoice->due_date->format('M d, Y') }}
                     </div>
+                </td>
+                <td style="text-align: right;">
                 </td>
             </tr>
         </table>

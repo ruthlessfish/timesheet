@@ -21,7 +21,7 @@ class TimeEntryFactory extends Factory
     public function definition(): array
     {
         $startTime = fake()->dateTimeBetween('-30 days', 'now');
-        $endTime = (clone $startTime)->modify('+' . fake()->numberBetween(30, 480) . ' minutes');
+        $endTime = (clone $startTime)->modify('+'.fake()->numberBetween(30, 480).' minutes');
         $durationMinutes = (int) (($endTime->getTimestamp() - $startTime->getTimestamp()) / 60);
 
         return [
@@ -89,7 +89,7 @@ class TimeEntryFactory extends Factory
         return $this->state(function (array $attributes) use ($minutes) {
             $startTime = $attributes['start_time'] ?? now()->subMinutes($minutes);
             $endTime = (clone $startTime)->modify("+{$minutes} minutes");
-            
+
             return [
                 'start_time' => $startTime,
                 'end_time' => $endTime,

@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
-use PHPUnit\Framework\Attributes\Test;
-
 use App\Models\Project;
 use App\Models\TimeEntry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class TimeEntryTest extends TestCase
@@ -198,7 +197,7 @@ class TimeEntryTest extends TestCase
         $user = User::factory()->create();
         $project1 = Project::factory()->create(['user_id' => $user->id]);
         $project2 = Project::factory()->create(['user_id' => $user->id]);
-        
+
         $entry1 = TimeEntry::factory()->create(['user_id' => $user->id, 'project_id' => $project1->id]);
         $entry2 = TimeEntry::factory()->create(['user_id' => $user->id, 'project_id' => $project2->id]);
 

@@ -19,11 +19,9 @@ class InvoiceService
 
     /**
      * Create invoice from time entries
-     * 
-     * @param int $userId
-     * @param int $clientId
-     * @param array<int> $timeEntryIds
-     * @param array<string, mixed> $data
+     *
+     * @param  array<int>  $timeEntryIds
+     * @param  array<string, mixed>  $data
      */
     public function createFromTimeEntries(int $userId, int $clientId, array $timeEntryIds, array $data): Invoice
     {
@@ -39,7 +37,7 @@ class InvoiceService
         ]);
 
         // Add time entries as invoice items
-        if (!empty($timeEntryIds)) {
+        if (! empty($timeEntryIds)) {
             $timeEntries = TimeEntry::with('project.client')
                 ->whereIn('id', $timeEntryIds)
                 ->where('user_id', $userId)
@@ -61,10 +59,6 @@ class InvoiceService
 
     /**
      * Add a time entry as an invoice item
-     * 
-     * @param Invoice $invoice
-     * @param TimeEntry $timeEntry
-     * @return InvoiceItem  
      */
     protected function addTimeEntryToInvoice(Invoice $invoice, TimeEntry $timeEntry): InvoiceItem
     {
@@ -84,9 +78,6 @@ class InvoiceService
 
     /**
      * Update invoice totals
-     * 
-     * @param Invoice $invoice
-     * @return Invoice
      */
     public function updateTotals(Invoice $invoice): Invoice
     {
@@ -98,9 +89,8 @@ class InvoiceService
 
     /**
      * Update an existing invoice
-     * 
-     * @param Invoice $invoice
-     * @param array<string, mixed> $data
+     *
+     * @param  array<string, mixed>  $data
      */
     public function updateInvoice(Invoice $invoice, array $data): Invoice
     {
@@ -118,8 +108,6 @@ class InvoiceService
 
     /**
      * Delete invoice and unmark time entries
-     * 
-     * @param Invoice $invoice 
      */
     public function deleteInvoice(Invoice $invoice): void
     {
@@ -140,21 +128,16 @@ class InvoiceService
 
     /**
      * Generate PDF for invoice
-     * 
-     * @param Invoice $invoice
      */
     public function generatePDF(Invoice $invoice)
     {
         $invoice->load(['client', 'items', 'user']);
-        
+
         return Pdf::loadView('invoices.pdf', compact('invoice'));
     }
 
     /**
      * Get unbilled time entries for a client
-     * 
-     * @param int $clientId
-     * @param int $userId   
      */
     public function getUnbilledEntriesForClient(int $clientId, int $userId): Collection
     {
@@ -163,9 +146,8 @@ class InvoiceService
 
     /**
      * Calculate invoice totals preview without saving
-     * 
-     * @param array<int> $timeEntryIds
-     * @param float $taxRate
+     *
+     * @param  array<int>  $timeEntryIds
      * @return array<string, float>
      */
     public function calculatePreviewTotals(array $timeEntryIds, float $taxRate = 0): array
@@ -191,37 +173,31 @@ class InvoiceService
 
     /**
      * Mark invoice as sent
-     * 
-     * @param Invoice $invoice
-     * @return Invoice
      */
     public function markAsSent(Invoice $invoice): Invoice
     {
         $invoice->update(['status' => 'sent']);
+
         return $invoice->fresh();
     }
 
     /**
      * Mark invoice as paid
-     *
-     * @param Invoice $invoice
-     * @return Invoice
      */
     public function markAsPaid(Invoice $invoice): Invoice
     {
         $invoice->update(['status' => 'paid']);
+
         return $invoice->fresh();
     }
 
     /**
      * Mark invoice as overdue
-     * 
-     * @param Invoice $invoice
-     * @return Invoice
      */
     public function markAsOverdue(Invoice $invoice): Invoice
     {
         $invoice->update(['status' => 'overdue']);
+
         return $invoice->fresh();
     }
 }

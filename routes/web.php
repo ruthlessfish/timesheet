@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProfileController;
@@ -42,6 +43,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Company routes
+    Route::get('/profile/company/create', [CompanyController::class, 'create'])->name('profile.company.create');
+    Route::post('/profile/company', [CompanyController::class, 'store'])->name('profile.company.store');
+    Route::get('/profile/company/{company}/edit', [CompanyController::class, 'edit'])->name('profile.company.edit');
+    Route::patch('/profile/company/{company}', [CompanyController::class, 'update'])->name('profile.company.update');
+    Route::patch('/profile/company/{company}/set-default', [CompanyController::class, 'setDefault'])->name('profile.company.set-default');
+    Route::delete('/profile/company/{company}', [CompanyController::class, 'destroy'])->name('profile.company.destroy');
+
     Route::patch('/settings/theme', [ThemeController::class, 'update'])->name('settings.theme.update');
 });
 

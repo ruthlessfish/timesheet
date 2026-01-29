@@ -47,7 +47,7 @@ class InvoiceTest extends TestCase
             'client_id' => $client->id,
             'user_id' => $user->id,
         ]);
-        
+
         $timeEntry1 = TimeEntry::factory()->create([
             'project_id' => $project->id,
             'user_id' => $user->id,
@@ -86,7 +86,7 @@ class InvoiceTest extends TestCase
             'client_id' => $client->id,
             'user_id' => $user->id,
         ]);
-        
+
         $timeEntry = TimeEntry::factory()->create([
             'project_id' => $project->id,
             'user_id' => $user->id,
@@ -116,14 +116,14 @@ class InvoiceTest extends TestCase
             'client_id' => $client->id,
             'user_id' => $user->id,
         ]);
-        
+
         $unbilledEntry = TimeEntry::factory()->create([
             'project_id' => $project->id,
             'user_id' => $user->id,
             'is_billable' => true,
             'is_invoiced' => false,
         ]);
-        
+
         $billedEntry = TimeEntry::factory()->invoiced()->create([
             'project_id' => $project->id,
             'user_id' => $user->id,
@@ -135,7 +135,7 @@ class InvoiceTest extends TestCase
         $response->assertOk();
         // The view should have unbilled entries available
         $response->assertViewHas('unbilledTimeEntries', function ($entries) use ($unbilledEntry, $billedEntry) {
-            return $entries->contains($unbilledEntry) && !$entries->contains($billedEntry);
+            return $entries->contains($unbilledEntry) && ! $entries->contains($billedEntry);
         });
     }
 
@@ -148,14 +148,14 @@ class InvoiceTest extends TestCase
             'client_id' => $client->id,
             'user_id' => $user->id,
         ]);
-        
+
         $billableEntry = TimeEntry::factory()->create([
             'project_id' => $project->id,
             'user_id' => $user->id,
             'is_billable' => true,
             'is_invoiced' => false,
         ]);
-        
+
         $nonBillableEntry = TimeEntry::factory()->nonBillable()->create([
             'project_id' => $project->id,
             'user_id' => $user->id,
@@ -165,7 +165,7 @@ class InvoiceTest extends TestCase
         $response = $this->actingAs($user)->get(route('invoices.create', ['client_id' => $client->id]));
 
         $response->assertViewHas('unbilledTimeEntries', function ($entries) use ($billableEntry, $nonBillableEntry) {
-            return $entries->contains($billableEntry) && !$entries->contains($nonBillableEntry);
+            return $entries->contains($billableEntry) && ! $entries->contains($nonBillableEntry);
         });
     }
 
@@ -178,14 +178,14 @@ class InvoiceTest extends TestCase
             'client_id' => $client->id,
             'user_id' => $user->id,
         ]);
-        
+
         $completedEntry = TimeEntry::factory()->create([
             'project_id' => $project->id,
             'user_id' => $user->id,
             'is_billable' => true,
             'is_invoiced' => false,
         ]);
-        
+
         $runningEntry = TimeEntry::factory()->running()->create([
             'project_id' => $project->id,
             'user_id' => $user->id,
@@ -196,7 +196,7 @@ class InvoiceTest extends TestCase
         $response = $this->actingAs($user)->get(route('invoices.create', ['client_id' => $client->id]));
 
         $response->assertViewHas('unbilledTimeEntries', function ($entries) use ($completedEntry, $runningEntry) {
-            return $entries->contains($completedEntry) && !$entries->contains($runningEntry);
+            return $entries->contains($completedEntry) && ! $entries->contains($runningEntry);
         });
     }
 
@@ -210,7 +210,7 @@ class InvoiceTest extends TestCase
             'user_id' => $user->id,
             'hourly_rate' => null, // Will use client rate
         ]);
-        
+
         // 2 hours at $100/hr = $200
         $timeEntry = TimeEntry::factory()->create([
             'project_id' => $project->id,
@@ -285,7 +285,7 @@ class InvoiceTest extends TestCase
             'client_id' => $client->id,
             'user_id' => $user->id,
         ]);
-        
+
         $timeEntry = TimeEntry::factory()->invoiced()->create([
             'project_id' => $project->id,
             'user_id' => $user->id,
@@ -332,6 +332,59 @@ class InvoiceTest extends TestCase
         $response = $this->actingAs($user)->get(route('invoices.pdf', $otherInvoice));
 
         $response->assertForbidden();
+    }
+
+    #[Test]
+    public function invoice_pdf_includes_company_information()
+    {
+        $user = User::factory()->create();
+        $company = \App\Models\Company::factory()->create([
+            'user_id' => $user->id,
+            'is_default' => true,
+            'name' => 'Test Company LLC',
+            'address' => '456 Business Ave',
+            'phone' => '555-1234',
+            'email' => 'info@testcompany.com',
+            'website' => 'https://testcompany.com',
+        ]);
+
+        $client = Client::factory()->create(['user_id' => $user->id]);
+        $invoice = Invoice::factory()->create([
+            'user_id' => $user->id,
+            'client_id' => $client->id,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('invoices.pdf', $invoice));
+
+        $response->assertStatus(200);
+        $content = $response->getContent();
+        $this->assertStringContainsString('Test Company LLC', $content);
+        $this->assertStringContainsString('456 Business Ave', $content);
+        $this->assertStringContainsString('555-1234', $content);
+        $this->assertStringContainsString('info@testcompany.com', $content);
+        $this->assertStringContainsString('https://testcompany.com', $content);
+    }
+
+    #[Test]
+    public function invoice_pdf_falls_back_to_user_info_without_company()
+    {
+        $user = User::factory()->create([
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+        ]);
+
+        $client = Client::factory()->create(['user_id' => $user->id]);
+        $invoice = Invoice::factory()->create([
+            'user_id' => $user->id,
+            'client_id' => $client->id,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('invoices.pdf', $invoice));
+
+        $response->assertStatus(200);
+        $content = $response->getContent();
+        $this->assertStringContainsString('John Doe', $content);
+        $this->assertStringContainsString('john@example.com', $content);
     }
 
     #[Test]

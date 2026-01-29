@@ -106,11 +106,11 @@ class DatabaseSeeder extends Seeder
 
         // Create time entries
         $timeEntries = [];
-        
+
         // Last 2 weeks of time entries
         for ($day = 14; $day >= 1; $day--) {
             $date = now()->subDays($day);
-            
+
             // Skip weekends
             if ($date->isWeekend()) {
                 continue;
@@ -120,7 +120,7 @@ class DatabaseSeeder extends Seeder
             $start = $date->setTime(9, 0);
             $end = $date->setTime(12, 30);
             $duration = $start->diffInMinutes($end);
-            
+
             $entry1 = TimeEntry::create([
                 'user_id' => $user->id,
                 'project_id' => $project1->id,
@@ -132,7 +132,7 @@ class DatabaseSeeder extends Seeder
                 'is_billable' => true,
                 'is_invoiced' => $day > 7,
             ]);
-            
+
             if ($day > 7) {
                 $timeEntries[] = $entry1;
             }
@@ -142,11 +142,11 @@ class DatabaseSeeder extends Seeder
             $start = $date->setTime(13, 30);
             $end = $date->setTime(17, 0);
             $duration = $start->diffInMinutes($end);
-            
+
             $entry2 = TimeEntry::create([
                 'user_id' => $user->id,
                 'project_id' => $project->id,
-                'description' => $project->id == $project2->id 
+                'description' => $project->id == $project2->id
                     ? 'Implementing authentication features'
                     : 'Building product catalog',
                 'start_time' => $start,
@@ -155,7 +155,7 @@ class DatabaseSeeder extends Seeder
                 'is_billable' => true,
                 'is_invoiced' => $day > 7,
             ]);
-            
+
             if ($day > 7) {
                 $timeEntries[] = $entry2;
             }
@@ -178,7 +178,7 @@ class DatabaseSeeder extends Seeder
             $hours = $entry->duration / 60;
             $rate = $entry->hourly_rate ?? $entry->project->hourly_rate;
             $amount = $hours * $rate;
-            
+
             InvoiceItem::create([
                 'invoice_id' => $invoice->id,
                 'time_entry_id' => $entry->id,
@@ -187,7 +187,7 @@ class DatabaseSeeder extends Seeder
                 'rate' => $rate,
                 'amount' => $amount,
             ]);
-            
+
             $subtotal += $amount;
         }
 

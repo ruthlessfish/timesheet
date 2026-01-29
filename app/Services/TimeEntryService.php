@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\TimeEntry;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class TimeEntryService
@@ -15,10 +14,9 @@ class TimeEntryService
 
     /**
      * Start a new timer for a user
-     * 
-     * @param int $userId
-     * @param int $projectId
-     * @param array<string, mixed> $data
+     *
+     * @param  array<string, mixed>  $data
+     *
      * @throws \Exception if user already has an active timer
      */
     public function startTimer(int $userId, int $projectId, array $data = []): TimeEntry
@@ -46,9 +44,7 @@ class TimeEntryService
 
     /**
      * Stop a running timer
-     * 
-     * @param TimeEntry $timeEntry
-     * @return TimeEntry
+     *
      * @throws \Exception if timer is already stopped
      */
     public function stopTimer(TimeEntry $timeEntry): TimeEntry
@@ -58,15 +54,14 @@ class TimeEntryService
         }
 
         $timeEntry->stop();
-        
+
         return $timeEntry->fresh();
-    }   
+    }
 
     /**
      * Create a manual time entry with duration calculation
-     * 
-     * @param int $userId
-     * @param array<string, mixed> $data
+     *
+     * @param  array<string, mixed>  $data
      */
     public function createManualEntry(int $userId, array $data): TimeEntry
     {
@@ -92,9 +87,8 @@ class TimeEntryService
 
     /**
      * Update an existing time entry
-     * 
-     * @param TimeEntry $timeEntry
-     * @param array<string, mixed> $data
+     *
+     * @param  array<string, mixed>  $data
      */
     public function updateEntry(TimeEntry $timeEntry, array $data): TimeEntry
     {
@@ -120,9 +114,6 @@ class TimeEntryService
 
     /**
      * Get active timer for a user
-     * 
-     * @param int $userId
-     * @return TimeEntry|null
      */
     public function getActiveTimer(int $userId): ?TimeEntry
     {
@@ -134,9 +125,8 @@ class TimeEntryService
 
     /**
      * Get time entries for a user with optional filters
-     * 
-     * @param int $userId
-     * @param array<string, mixed> $filters
+     *
+     * @param  array<string, mixed>  $filters
      * @return Collection|\Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
     public function getEntriesForUser(int $userId, array $filters = [])
@@ -183,9 +173,6 @@ class TimeEntryService
 
     /**
      * Calculate total hours for a collection of time entries
-     * 
-     * @param Collection $timeEntries
-     * @return float
      */
     public function calculateTotalHours(Collection $timeEntries): float
     {
@@ -194,9 +181,6 @@ class TimeEntryService
 
     /**
      * Calculate total amount for a collection of time entries
-     * 
-     * @param Collection $timeEntries
-     * @return float
      */
     public function calculateTotalAmount(Collection $timeEntries): float
     {

@@ -13,40 +13,32 @@ class BillingService
 {
     /**
      * Resolve hourly rate using cascade: entry → project → client → 0
-     * 
-     * @param TimeEntry $timeEntry
-     * @return float    
      */
     public function resolveHourlyRate(TimeEntry $timeEntry): float
     {
         // Ensure relationships are loaded
         $timeEntry->loadMissing('project.client');
-        
-        return $timeEntry->hourly_rate 
-            ?? $timeEntry->project->hourly_rate 
-            ?? $timeEntry->project->client->hourly_rate 
+
+        return $timeEntry->hourly_rate
+            ?? $timeEntry->project->hourly_rate
+            ?? $timeEntry->project->client->hourly_rate
             ?? 0;
     }
 
     /**
      * Calculate amount for a time entry
-     * 
-     *  @param TimeEntry $timeEntry
-     *  @return float
      */
     public function calculateAmount(TimeEntry $timeEntry): float
     {
         $rate = $this->resolveHourlyRate($timeEntry);
         $hours = $timeEntry->duration / 60;
-        
+
         return $hours * $rate;
     }
 
     /**
      * Get unbilled time entries for a client
-     * 
-     * @param int $clientId
-     * @param int $userId
+     *
      * @return Collection<TimeEntry>
      */
     public function getUnbilledTimeEntries(int $clientId, int $userId): Collection
@@ -65,9 +57,8 @@ class BillingService
 
     /**
      * Calculate total amount for a collection of time entries
-     * 
-     * @param Collection<TimeEntry> $timeEntries
-     * @return float
+     *
+     * @param  Collection<TimeEntry>  $timeEntries
      */
     public function calculateTotalAmount(Collection $timeEntries): float
     {
@@ -78,9 +69,8 @@ class BillingService
 
     /**
      * Calculate total hours for a collection of time entries
-     * 
-     * @param Collection<TimeEntry> $timeEntries
-     * @return float
+     *
+     * @param  Collection<TimeEntry>  $timeEntries
      */
     public function calculateTotalHours(Collection $timeEntries): float
     {
@@ -89,8 +79,8 @@ class BillingService
 
     /**
      * Mark time entries as invoiced
-     * 
-     * @param Collection<TimeEntry> $timeEntries
+     *
+     * @param  Collection<TimeEntry>  $timeEntries
      */
     public function markAsInvoiced(Collection $timeEntries): void
     {
@@ -100,8 +90,8 @@ class BillingService
 
     /**
      * Mark time entries as not invoiced
-     * 
-     * @param Collection<TimeEntry> $timeEntries
+     *
+     * @param  Collection<TimeEntry>  $timeEntries
      */
     public function markAsNotInvoiced(Collection $timeEntries): void
     {

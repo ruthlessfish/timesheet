@@ -16,12 +16,13 @@ class TimeEntryServiceTest extends TestCase
     use RefreshDatabase;
 
     private TimeEntryService $timeEntryService;
+
     private BillingService $billingService;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->billingService = new BillingService();
+        $this->billingService = new BillingService;
         $this->timeEntryService = new TimeEntryService($this->billingService);
     }
 
@@ -144,10 +145,10 @@ class TimeEntryServiceTest extends TestCase
     {
         $user = User::factory()->create();
         $project = Project::factory()->for($user)->create();
-        
+
         $startTime = now()->subHours(3);
         $endTime = now()->subHours(2);
-        
+
         $entry = TimeEntry::factory()->for($project)->for($user)->create([
             'start_time' => $startTime,
             'end_time' => $endTime,
