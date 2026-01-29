@@ -1,6 +1,5 @@
 # Timeshit
-## Time Tracking Application for Freelance Web Developers
-
+**Time Tracking Application for Freelance Web Developers**
 *pronounced like "time sheet"
 
 A comprehensive time-tracking application built with Laravel 12, designe to manage clients, projects, time entries, and invoices.
