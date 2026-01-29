@@ -78,7 +78,6 @@ class TimeEntryController extends Controller
             'start_time' => 'required|date',
             'end_time' => 'nullable|date|after:start_time',
             'hourly_rate' => 'nullable|numeric|min:0',
-            'is_billable' => 'boolean',
         ]);
 
         $validated['is_billable'] = $request->has('is_billable') ? true : false;
@@ -137,7 +136,6 @@ class TimeEntryController extends Controller
             'start_time' => 'required|date',
             'end_time' => 'nullable|date|after:start_time',
             'hourly_rate' => 'nullable|numeric|min:0',
-            'is_billable' => 'boolean',
         ]);
 
         $validated['is_billable'] = $request->has('is_billable') ? true : false;

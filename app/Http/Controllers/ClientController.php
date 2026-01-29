@@ -43,7 +43,6 @@ class ClientController extends Controller
             'company' => 'nullable|string|max:255',
             'address' => 'nullable|string',
             'hourly_rate' => 'nullable|numeric|min:0',
-            'is_active' => 'boolean',
         ]);
 
         $validated['user_id'] = auth()->id();
@@ -106,7 +105,6 @@ class ClientController extends Controller
             'company' => 'nullable|string|max:255',
             'address' => 'nullable|string',
             'hourly_rate' => 'nullable|numeric|min:0',
-            'is_active' => 'boolean',
         ]);
 
         $validated['is_active'] = $request->has('is_active');

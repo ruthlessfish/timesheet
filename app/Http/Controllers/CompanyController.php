@@ -33,8 +33,9 @@ class CompanyController extends Controller
             'phone' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
             'website' => ['nullable', 'url', 'max:255'],
-            'is_default' => ['nullable', 'boolean'],
         ]);
+
+        $isDefault = $request->has('is_default') && $request->input('is_default') == '1';
 
         $company = auth()->user()->companies()->create([
             'name' => $validated['name'],
@@ -42,11 +43,11 @@ class CompanyController extends Controller
             'phone' => $validated['phone'] ?? null,
             'email' => $validated['email'] ?? null,
             'website' => $validated['website'] ?? null,
-            'is_default' => $validated['is_default'] ?? false,
+            'is_default' => $isDefault,
         ]);
 
         // If marked as default or if it's the first company, set as default
-        if (($validated['is_default'] ?? false) || auth()->user()->companies()->count() === 1) {
+        if ($isDefault || auth()->user()->companies()->count() === 1) {
             $company->setAsDefault();
         }
 
@@ -80,7 +81,6 @@ class CompanyController extends Controller
             'phone' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
             'website' => ['nullable', 'url', 'max:255'],
-            'is_default' => ['nullable', 'boolean'],
         ]);
 
         $company->update([
@@ -91,7 +91,8 @@ class CompanyController extends Controller
             'website' => $validated['website'] ?? null,
         ]);
 
-        if ($validated['is_default'] ?? false) {
+        $isDefault = $request->has('is_default') && $request->input('is_default') == '1';
+        if ($isDefault) {
             $company->setAsDefault();
         }
 
