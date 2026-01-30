@@ -15,7 +15,8 @@
 
             <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg" id="company">
                 <div class="max-w-xl">
-                    @include('profile.partials.update-company-information-form', ['companies' => auth()->user()->companies])
+                    @include('profile.partials.update-company-information-form', ['companies' =>
+                    auth()->user()->companies])
                 </div>
             </div>
 
@@ -25,7 +26,8 @@
                 </div>
             </div>
 
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg border border-red-600 dark:border-red-500">
+            <div
+                class="p-4 sm:p-8 bg-white dark:bg-red-200 shadow sm:rounded-lg border border-red-700 dark:border-red-700">
                 <div class="max-w-xl">
                     @include('profile.partials.delete-user-form')
                 </div>
