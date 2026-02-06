@@ -1,22 +1,16 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
+        <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 {{ __('Time Entries') }}
             </h2>
             <div class="flex space-x-2">
-                <a href="{{ route('time-entries.import-form') }}"
-                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded inline-flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-                    </svg>
-                    Import CSV
-                </a>
-                <a href="{{ route('time-entries.create') }}"
-                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-                    Add Time Entry
-                </a>
+                <x-secondary-button type="button" onclick="window.location='{{ route('time-entries.import-form') }}'">
+                    Import
+                </x-secondary-button>
+                <x-primary-button type="button" onclick="window.location='{{ route('time-entries.create') }}'">
+                    New Time Entry
+                </x-primary-button>
             </div>
         </div>
     </x-slot>
@@ -61,10 +55,9 @@
                     </div>
                     <form action="{{ route('time-entries.stop', $activeTimer) }}" method="POST">
                         @csrf
-                        <button type="submit"
-                            class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg text-lg font-semibold">
+                        <x-danger-button class="px-6 py-3 text-lg">
                             Stop Timer
-                        </button>
+                        </x-danger-button>
                     </form>
                 </div>
             </div>
@@ -121,10 +114,9 @@
                         </div>
 
                         <div class="flex items-end">
-                            <button type="submit"
-                                class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">
+                            <x-secondary-button type="submit" class="w-full">
                                 Filter
-                            </button>
+                            </x-secondary-button>
                         </div>
                     </form>
                 </div>
@@ -141,20 +133,17 @@
                         </span>
 
                         <div class="flex items-center space-x-3">
-                            <button @click="bulkEdit()"
-                                class="px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm font-medium transition">
+                            <x-primary-button type="button" @click="bulkEdit()" class="text-sm">
                                 Edit Selected
-                            </button>
+                            </x-primary-button>
 
-                            <button @click="bulkDelete()"
-                                class="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium transition">
+                            <x-danger-button type="button" @click="bulkDelete()" class="text-sm">
                                 Delete Selected
-                            </button>
+                            </x-danger-button>
 
-                            <button @click="clearSelection()"
-                                class="px-3 py-1.5 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 text-sm font-medium transition">
+                            <x-secondary-button type="button" @click="clearSelection()" class="text-sm">
                                 Clear
-                            </button>
+                            </x-secondary-button>
                         </div>
                     </div>
                 </div>

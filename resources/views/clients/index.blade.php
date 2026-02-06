@@ -4,10 +4,9 @@
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 {{ __('Clients') }}
             </h2>
-            <a href="{{ route('clients.create') }}"
-                class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-xs tracking-wide uppercase text-black dark:text-white px-4 py-3 rounded-md border border-gray-300 dark:border-gray-700 shadow shadow-black/5">
+            <x-primary-button type="button" onclick="window.location='{{ route('clients.create') }}'">
                 Add New Client
-            </a>
+            </x-primary-button>
         </div>
     </x-slot>
 

@@ -1,18 +1,22 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
+        <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 Invoice {{ $invoice->invoice_number }}
             </h2>
-            <div class="space-x-2">
+            <div class="flex space-x-2">
                 <a href="{{ route('invoices.pdf', $invoice) }}"
-                    class="bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white px-4 py-2 rounded">
+                    class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 inline-flex items-center px-4 py-2 border border-green-600 dark:border-green-400 rounded-md font-semibold text-xs uppercase tracking-widest hover:bg-green-50 dark:hover:bg-green-900/20 transition">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
                     Download PDF
                 </a>
-                <a href="{{ route('invoices.edit', $invoice) }}"
-                    class="bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-4 py-2 rounded">
+                <x-primary-button type="button" onclick="window.location='{{ route('invoices.edit', $invoice) }}'">
                     Edit Invoice
-                </a>
+                </x-primary-button>
             </div>
         </div>
     </x-slot>
