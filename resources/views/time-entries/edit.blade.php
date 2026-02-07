@@ -101,14 +101,17 @@
                             </div>
                         </div>
 
-                        <div class="mt-6 flex justify-end space-x-3">
-                            <x-secondary-button type="button"
-                                onclick="window.location='{{ route('time-entries.index') }}'">
-                                Cancel
-                            </x-secondary-button>
-                            <x-primary-button>
-                                Update Time Entry
-                            </x-primary-button>
+                        <div class="mt-6 flex justify-between space-x-3">
+                            <x-delete-button :route="'time-entries.destroy'" :resource="$timeEntry" />
+                            <div>
+                                <x-secondary-button type="button"
+                                    onclick="window.location='{{ route('time-entries.index') }}'">
+                                    Cancel
+                                </x-secondary-button>
+                                <x-primary-button type="button">
+                                    Update Time Entry
+                                </x-primary-button>
+                            </div>
                         </div>
                     </form>
                 </div>
