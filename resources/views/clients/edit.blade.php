@@ -89,13 +89,18 @@
                             </div>
                         </div>
 
-                        <div class="mt-6 flex justify-end space-x-3">
-                            <x-secondary-button type="button" onclick="window.location='{{ route('clients.index') }}'">
-                                Cancel
-                            </x-secondary-button>
-                            <x-primary-button>
-                                Update Client
-                            </x-primary-button>
+                        <div class="mt-6 flex justify-between space-x-3">
+                            <x-delete-button :url="route('clients.destroy', $client)"
+                                confirm-text="Are you sure you want to delete this client?" />
+                            <div>
+                                <x-secondary-button type="button"
+                                    onclick="window.location='{{ route('clients.index') }}'">
+                                    Cancel
+                                </x-secondary-button>
+                                <x-primary-button type="button">
+                                    Update Client
+                                </x-primary-button>
+                            </div>
                         </div>
                     </form>
                 </div>

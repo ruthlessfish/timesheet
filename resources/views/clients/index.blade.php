@@ -84,14 +84,9 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <a href="{{ route('clients.edit', $client) }}"
                                             class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-3">Edit</a>
-                                        <form action="{{ route('clients.destroy', $client) }}" method="POST"
-                                            class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
-                                                onclick="return confirm('Are you sure you want to delete this client?')">Delete</button>
-                                        </form>
+                                        <x-delete-button :url="route('clients.destroy', $client)"
+                                            confirm-text="Are you sure you want to delete this client?"
+                                            show-icon=false />
                                     </td>
                                 </tr>
                                 @empty

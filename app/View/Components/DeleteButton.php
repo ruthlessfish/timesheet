@@ -12,8 +12,10 @@ class DeleteButton extends Component
      * Create a new component instance.
      */
     public function __construct(
-        public $route,
-        public $resource
+        public $url,
+        public $confirmText = 'Are you sure?',
+        public $showText = true,
+        public $showIcon = true
     ) {}
 
     /**

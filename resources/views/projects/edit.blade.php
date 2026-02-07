@@ -125,13 +125,18 @@
                             </div>
                         </div>
 
-                        <div class="mt-6 flex justify-end space-x-3">
-                            <x-secondary-button type="button" onclick="window.location='{{ route('projects.index') }}'">
-                                Cancel
-                            </x-secondary-button>
-                            <x-primary-button>
-                                Update Project
-                            </x-primary-button>
+                        <div class="mt-6 flex justify-between space-x-3">
+                            <x-delete-button :url="route('projects.destroy', $project)"
+                                confirm-text="Are you sure you want to delete this project?" />
+                            <div>
+                                <x-secondary-button type="button"
+                                    onclick="window.location='{{ route('projects.index') }}'">
+                                    Cancel
+                                </x-secondary-button>
+                                <x-primary-button type="button">
+                                    Update Project
+                                </x-primary-button>
+                            </div>
                         </div>
                     </form>
                 </div>

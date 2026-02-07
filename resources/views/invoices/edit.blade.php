@@ -116,14 +116,18 @@
                             </div>
                         </div>
 
-                        <div class="mt-6 flex justify-end space-x-3">
-                            <x-secondary-button type="button"
-                                onclick="window.location='{{ route('invoices.show', $invoice) }}'">
-                                Cancel
-                            </x-secondary-button>
-                            <x-primary-button>
-                                Update Invoice
-                            </x-primary-button>
+                        <div class="mt-6 flex justify-between space-x-3">
+                            <x-delete-button :url="route('invoices.destroy', $invoice)"
+                                confirm-text="Are you sure you want to delete this invoice?" />
+                            <div>
+                                <x-secondary-button type="button"
+                                    onclick="window.location='{{ route('invoices.show', $invoice) }}'">
+                                    Cancel
+                                </x-secondary-button>
+                                <x-primary-button type="button">
+                                    Update Invoice
+                                </x-primary-button>
+                            </div>
                         </div>
                     </form>
                 </div>

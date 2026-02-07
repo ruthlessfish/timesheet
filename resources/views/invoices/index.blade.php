@@ -81,14 +81,9 @@
                                             class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300">Edit</a>
                                         <a href="{{ route('invoices.pdf', $invoice) }}"
                                             class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300">PDF</a>
-                                        <form action="{{ route('invoices.destroy', $invoice) }}" method="POST"
-                                            class="inline"
-                                            onsubmit="return confirm('Are you sure you want to delete this invoice?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300">Delete</button>
-                                        </form>
+                                        <x-delete-button :url="route('invoices.destroy', $invoice)"
+                                            confirm-text="Are you sure you want to delete this invoice?"
+                                            show-icon=false />
                                     </td>
                                 </tr>
                                 @empty

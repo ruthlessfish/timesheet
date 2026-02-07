@@ -250,15 +250,11 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <a href="{{ route('time-entries.edit', $entry) }}"
-                                            class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-3">Edit</a>
-                                        <form action="{{ route('time-entries.destroy', $entry) }}" method="POST"
-                                            class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
-                                                onclick="return confirm('Are you sure?')">Delete</button>
-                                        </form>
+                                            class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-3">
+                                            Edit
+                                        </a>
+                                        <x-delete-button :url="route('time-entries.destroy', $entry)"
+                                            confirm-text="Delete this time entry?" show-icon=false />
                                     </td>
                                 </tr>
                                 @empty

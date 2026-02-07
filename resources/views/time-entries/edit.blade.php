@@ -102,7 +102,7 @@
                         </div>
 
                         <div class="mt-6 flex justify-between space-x-3">
-                            <x-delete-button :route="'time-entries.destroy'" :resource="$timeEntry" />
+                            <x-delete-button :url="route('time-entries.destroy', $timeEntry)" />
                             <div>
                                 <x-secondary-button type="button"
                                     onclick="window.location='{{ route('time-entries.index') }}'">
