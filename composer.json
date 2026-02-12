@@ -14,6 +14,7 @@
         "forxer/laravel-gravatar": "^5.0",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.2",
+        "laravel/telescope": "^5.17",
         "laravel/tinker": "^2.10.1",
         "wireui/heroicons": "^2.9"
     },
