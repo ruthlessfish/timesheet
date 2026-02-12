@@ -1,182 +1,76 @@
 # Laravel Time Tracking Application
 
-Time-tracking system for freelance web developers built with Laravel 12, Breeze authentication, and Tailwind CSS.
+Freelance time-tracking app: Laravel 12 + Breeze + Blade/Tailwind CSS + Alpine.js + Chart.js. SQLite database.
 
-## Architecture & Data Flow
+## Architecture
 
-**Hierarchy**: `User` → `Client` → `Project` → `TimeEntry` → `Invoice` → `InvoiceItem`
+**Data hierarchy**: `User` → `Client` → `Project` → `TimeEntry` → `Invoice` → `InvoiceItem`. `Company` stores the user's own business info for invoices. All resources are user-scoped via `user_id` foreign key.
 
-**Hourly Rate Cascading**: The app uses a fallback chain for billing rates:
+**Service layer** (`app/Services/`): Controllers delegate all business logic to services injected via constructor DI.
+- `BillingService` — Rate cascade, amount calculations, unbilled entry queries
+- `TimeEntryService` — Timer start/stop, active timer constraint, manual entries, filtering
+- `InvoiceService` — Invoice creation from time entries, PDF generation, entry marking
+- `AnalyticsService` — Dashboard stats, daily hours, project breakdowns, billable ratio
+
+**API**: Versioned REST API at `routes/api.php` under `/api/v1/` with Sanctum auth, rate limiting, and Eloquent API Resources (`app/Http/Resources/`).
+
+## Critical Business Rules
+
+**Hourly rate cascade** — Always resolve rates in this order (see `BillingService::resolveHourlyRate()`):
 ```
 TimeEntry.hourly_rate ?? Project.hourly_rate ?? Client.hourly_rate ?? 0
 ```
-This pattern is critical in `TimeEntry::getAmountAttribute()`, `Project::getTotalAmountAttribute()`, and invoice generation. Always respect this cascade when calculating amounts.
+This cascade appears in `TimeEntry::getAmountAttribute()`, `Project::getTotalAmountAttribute()`, and invoice item creation. Never bypass it.
 
-**Invoice Workflow**:
-1. Time entries are marked `is_billable=true` and tracked per project
-2. Invoice creation queries unbilled entries: `is_billable=true AND is_invoiced=false AND end_time NOT NULL`
-3. Selected entries become `InvoiceItem` records with calculated amounts
-4. Time entries are marked `is_invoiced=true` to prevent double-billing
-5. Invoice auto-generates number on creation: `INV-{YEAR}-{0001}` (see `Invoice::boot()`)
+**Active timer constraint** — One active timer per user (`end_time IS NULL`). `TimeEntryService::startTimer()` throws an exception if one exists. Stopping sets `end_time` and calculates `duration` (in minutes).
 
-**Active Timer Pattern**: Only one active timer per user allowed. Active = `end_time IS NULL`. 
-- Controllers check for active timers before starting new ones
-- Dashboard and time-entries.index display active timer prominently
-- Stopping a timer sets `end_time`, calculates `duration` via `TimeEntry::calculateDuration()`
-
-## Development Workflow
-
-**Setup & Running**:
-```bash
-composer run setup          # Full setup: deps, .env, key, migrate, npm
-composer run dev            # Runs 4 concurrent processes: serve, queue, pail, vite
-composer run test           # Clear config cache, run PHPUnit
-```
-
-The `dev` script uses `concurrently` to manage Laravel server (8000), queue worker, Pail logs, and Vite dev server simultaneously. Never run these individually—use the composer script.
-
-**Database**: Defaults to SQLite (`database/database.sqlite`). Migrations use `onDelete('cascade')` for foreign keys. Models use soft deletes sparingly—most use hard deletes with cascade.
+**Invoice workflow** — Unbilled entries = `is_billable=true AND is_invoiced=false AND end_time NOT NULL`. Creating an invoice marks entries `is_invoiced=true`; deleting an invoice reverses this. Invoice numbers auto-generate as `INV-{YEAR}-{0001}` in `Invoice::boot()`.
 
 ## Code Conventions
 
-**Controllers**: 
-- Standard resource controllers with `use AuthorizesRequests` trait
-- Always eager load relationships in index/show: `->with('project.client')`
-- Authorization via `$this->authorize('view', $model)` in show/edit/update/delete
-- Validation inline in controller methods (no FormRequest classes except Auth)
-- **Service Layer**: Business logic extracted to services (see `docs/REFACTORING_PLAN.md`)
-  - Inject services via constructor dependency injection
-  - Controllers handle HTTP concerns only (validation, responses, redirects)
-  - Services handle business logic (calculations, workflows, data manipulation)
+**Controllers**: Use `AuthorizesRequests` trait. Always eager load relationships (`->with('project.client')`). Authorization via `$this->authorize('view', $model)`. **New code must use FormRequest classes** for validation (`app/Http/Requests/`). Existing controllers use inline validation (legacy—migrate to FormRequests over time).
 
-**Services** (app/Services/):
-- **BillingService**: Rate resolution (4-level cascade), amount calculations, unbilled entry queries
-- **TimeEntryService**: Timer management, active timer constraint, duration calculations
-- **InvoiceService**: Invoice creation workflow, PDF generation, time entry marking/unmarking
-- **AnalyticsService**: Dashboard statistics, time series data, project breakdowns, revenue analysis
-- All services use dependency injection and delegate to each other (composition over duplication)
-- Services maintain critical business rules (rate cascade, invoice workflow, active timer constraint)
+**Models**: Relationships are return-typed (`BelongsTo`, `HasMany`). Computed attributes use `getXxxAttribute()`. Casts use `$casts` property (most models) or `casts()` method (`Company`). `Project` uses `HasStatus` trait (`app/Models/Traits/`) for status helpers and CSS classes.
 
-**Models**:
-- All relationships explicitly typed: `BelongsTo`, `HasMany`
-- Computed attributes via `getXxxAttribute()`: `getTotalHoursAttribute()`, `getAmountAttribute()`
-- Model methods for business logic: `TimeEntry::stop()`, `Invoice::calculateTotals()`
-- Casts for decimals, dates, booleans defined in `$casts` array
+**Policies**: All resources have policies with user ownership pattern: `$user->id === $model->user_id`. Auto-discovered (no manual registration).
 
-**Views**:
-- Use `<x-app-layout>` for authenticated pages, `<x-guest-layout>` for auth pages
-- Blade components in `resources/views/components/` (primary-button, text-input, etc.)
-- Dashboard uses Chart.js for visualizations (imported in blade, data from controller)
-- Forms use Tailwind CSS + `@tailwindcss/forms` plugin
+**Views**: `<x-app-layout>` for authenticated pages. Blade components in `resources/views/components/`. Chart.js data flows from `AnalyticsService` → controller → `compact()` → JSON in Blade. Icons via `wireui/heroicons`.
 
-**Policies**: 
-- All resources have policies (ClientPolicy, ProjectPolicy, TimeEntryPolicy, InvoicePolicy)
-- Standard pattern: users can only view/edit/delete their own resources via `$user->id === $model->user_id`
-- Registered in `AppServiceProvider` (currently empty but policies auto-discovered)
+## Development
 
-## Key Files & Patterns
-
-**Service Layer Architecture**:
-- `app/Services/BillingService.php` - Core billing calculations, rate cascade implementation
-- `app/Services/TimeEntryService.php` - Timer workflows, active timer validation
-- `app/Services/InvoiceService.php` - Invoice creation, PDF generation, time entry marking
-- `app/Services/AnalyticsService.php` - Dashboard stats, charts, revenue analytics
-- See `docs/REFACTORING_PLAN.md` for full service documentation and architecture
-
-**Rate Calculation Examples**:
-- `app/Services/BillingService.php:resolveHourlyRate()` - 4-level cascade: entry → project → client → 0
-- `app/Services/BillingService.php:calculateAmount()` - Duration (minutes) → hours * rate
-- `app/Models/TimeEntry.php:52-56` - `getAmountAttribute()` delegates to service (legacy)
-- `app/Models/Project.php:47-54` - `getTotalAmountAttribute()` aggregates time entries
-
-**Dashboard Analytics**: 
-- `app/Services/AnalyticsService.php` - All dashboard calculations extracted to service
-- `getDashboardStats()` - Clients, projects, monthly hours, monthly revenue
-- `getDailyHoursTimeSeries()` - Last N days data for line chart
-- `getProjectHoursBreakdown()` - Top N projects by hours for bar chart
-- `getBillableRatio()` - Billable vs non-billable breakdown for doughnut chart
-- Legacy: `app/Http/Controllers/DashboardController.php` (being refactored to use service)
-
-**PDF Generation**: 
-- Uses `barryvdh/laravel-dompdf`
-- Route: `GET /invoices/{invoice}/pdf` → `InvoiceController::pdf()`
-- Generate with: `Pdf::loadView('invoices.pdf', compact('invoice'))->download()`
-
-**Frontend Build**:
-- Vite bundles `resources/css/app.css` and `resources/js/app.js`
-- Alpine.js available globally for interactive components
-- Chart.js as npm dependency for dashboard visualizations
-
-**Chart.js Implementation Pattern**:
-- CDN loaded via `@push('scripts')` in blade templates
-- Controller prepares data as Laravel collections transformed to JSON
-- Three chart types on dashboard: line (daily hours), bar (project hours), doughnut (billable ratio)
-- Data flow: Controller aggregates → `compact()` to view → `{!! json_encode($collection->pluck('field')) !!}` in JS
-- Example: `DashboardController` creates `$last7Days` collection with `['date', 'hours']`, plucked separately for labels/data
-- Charts use responsive config with `aspectRatio: 2` for consistent sizing
-
-## Testing Strategy
-
-**Current Status**: 147 tests, 313 assertions, 100% passing (see `docs/TEST_SUMMARY.md`)
-
-**Test Structure**:
-```
-tests/Feature/     # HTTP, authorization, workflows (62 tests)
-tests/Unit/        # Models (26 tests), Services (51 tests)
-```
-
-**Conventions**:
-- Use `RefreshDatabase` trait for all database-touching tests
-- Factories: Client, Project, TimeEntry, Invoice all implemented
-- Test authorization with multiple users via policies
-- Service tests cover all business logic in isolation
-- Feature tests verify HTTP layer and integration
-
-**Critical Test Coverage** ✅:
-1. ✅ Active timer constraint (TimeEntryServiceTest)
-2. ✅ Rate cascade resolution - all 4 levels (BillingServiceTest)
-3. ✅ Invoice workflow - marks entries as invoiced (InvoiceServiceTest)
-4. ✅ Auto-generated invoice numbers INV-YYYY-0001 (InvoiceTest)
-5. ✅ Unbilled entry filtering (BillingServiceTest, InvoiceTest)
-
-**Service Tests** (51 tests):
-- `BillingServiceTest.php` - 10 tests: rate cascade, calculations, unbilled queries
-- `TimeEntryServiceTest.php` - 15 tests: timer workflows, active constraint, filtering
-- `InvoiceServiceTest.php` - 13 tests: invoice creation, PDF, marking/unmarking
-- `AnalyticsServiceTest.php` - 13 tests: dashboard stats, charts, revenue analysis
-
-**Running Tests**:
 ```bash
-composer run test    # Clears config cache, runs PHPUnit
-php artisan test     # Direct PHPUnit execution
-php artisan test --filter=ServiceName  # Run specific test class
+composer run setup    # Full setup: deps, .env, key, migrate, npm build
+composer run dev      # Concurrent: serve (8000), queue, pail logs, vite
+composer run test     # Clear config cache + PHPUnit
 ```
 
-**Documentation**:
-- Full test documentation: `docs/TEST_SUMMARY.md`
-- Refactoring plan: `docs/REFACTORING_PLAN.md`
-- API authentication guide: `docs/API_AUTHENTICATION.md`
+Always use `composer run dev` — never start server/queue/vite individually.
 
-## Common Tasks
+## Testing
 
-**Adding a new resource**:
-1. Create migration with proper foreign keys and cascade deletes
-2. Create model with fillable, casts, relationships, and computed attributes
-3. Create policy extending the user ownership pattern
-4. Create resource controller with eager loading and authorization
-5. Add routes to `routes/web.php` within auth middleware group
-6. Create views using `<x-app-layout>` and existing components
+**Structure**: `tests/Feature/` (HTTP, auth, workflows) and `tests/Unit/` (Models, Services). PHPUnit with `RefreshDatabase`. Factories exist for all models (`Client`, `Project`, `TimeEntry`, `Invoice`, `InvoiceItem`, `Company`, `User`).
 
-**Time Entry Flow**:
-- Start timer: Create with `start_time=now()`, `end_time=null`
-- Stop timer: Call `TimeEntry::stop()` which sets end_time and calculates duration
-- Manual entry: Provide both start_time and end_time, controller calls `calculateDuration()`
+**Run specific tests**: `php artisan test --compact --filter=ClassName` or pass a file path. Service tests are the core coverage for business logic (`tests/Unit/Services/`).
 
-**Invoice Creation**:
-- Get unbilled entries via project->client relationship
-- Create invoice, add selected time entries as invoice items
-- Mark entries as invoiced, calculate totals via `Invoice::calculateTotals()`
-- Export PDF with `Pdf::loadView()`
+**Key test files**: `BillingServiceTest` (rate cascade), `TimeEntryServiceTest` (timer workflows), `InvoiceServiceTest` (invoice creation/deletion), `AnalyticsServiceTest` (dashboard data).
+
+**Known failing tests** (as of 2026-02-11):
+- `Tests\Feature\Auth\EmailVerificationTest` — email verification screen
+- `Tests\Feature\Auth\PasswordConfirmationTest` — confirm password screen
+- `Tests\Feature\Auth\PasswordResetTest` — reset password link/screen (2 tests)
+- `Tests\Feature\Auth\RegistrationTest` — registration screen
+- `Tests\Feature\BulkOperationsTest` — bulk edit form loads
+- `Tests\Feature\CompanyControllerTest` — create/edit form views (2 tests)
+
+## Adding a New Resource
+
+1. Migration with foreign keys and `onDelete('cascade')`
+2. Model with `$fillable`, `$casts`, typed relationships, computed attributes
+3. Policy with user ownership checks
+4. Controller injecting relevant service(s), with eager loading and `AuthorizesRequests`
+5. Routes in `routes/web.php` inside the `auth` middleware group
+6. Views using `<x-app-layout>` and existing Blade components
+7. Factory and tests covering happy path, auth, and edge cases
 
 ===
 
