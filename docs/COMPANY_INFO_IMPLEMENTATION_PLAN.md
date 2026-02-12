@@ -401,7 +401,7 @@ Create a new partial form for company information settings.
                                class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300">
                                 Cancel
                             </a>
-                            <x-primary-button>
+                            <x-primary-button type="submit">
                                 {{ isset($company) ? __('Update Company') : __('Add Company') }}
                             </x-primary-button>
                         </div>

@@ -102,7 +102,7 @@
                                 onclick="window.location='{{ route('time-entries.index') }}'">
                                 Cancel
                             </x-secondary-button>
-                            <x-primary-button>
+                            <x-primary-button type="submit">
                                 Update {{ count($entries) }} Entries
                             </x-primary-button>
                         </div>
