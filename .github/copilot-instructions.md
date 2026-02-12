@@ -54,14 +54,6 @@ Always use `composer run dev` — never start server/queue/vite individually.
 
 **Key test files**: `BillingServiceTest` (rate cascade), `TimeEntryServiceTest` (timer workflows), `InvoiceServiceTest` (invoice creation/deletion), `AnalyticsServiceTest` (dashboard data).
 
-**Known failing tests** (as of 2026-02-11):
-- `Tests\Feature\Auth\EmailVerificationTest` — email verification screen
-- `Tests\Feature\Auth\PasswordConfirmationTest` — confirm password screen
-- `Tests\Feature\Auth\PasswordResetTest` — reset password link/screen (2 tests)
-- `Tests\Feature\Auth\RegistrationTest` — registration screen
-- `Tests\Feature\BulkOperationsTest` — bulk edit form loads
-- `Tests\Feature\CompanyControllerTest` — create/edit form views (2 tests)
-
 ## Adding a New Resource
 
 1. Migration with foreign keys and `onDelete('cascade')`
