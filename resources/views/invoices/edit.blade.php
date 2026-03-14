@@ -9,7 +9,7 @@
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
-                    <form action="{{ route('invoices.update', $invoice) }}" method="POST">
+                    <form id="edit-invoice-form" action="{{ route('invoices.update', $invoice) }}" method="POST">
                         @csrf
                         @method('PUT')
 
@@ -116,6 +116,8 @@
                             </div>
                         </div>
 
+                    </form>
+
                         <div class="mt-6 flex justify-between space-x-3">
                             <x-delete-button :url="route('invoices.destroy', $invoice)"
                                 confirm-text="Are you sure you want to delete this invoice?" />
@@ -124,12 +126,11 @@
                                     onclick="window.location='{{ route('invoices.show', $invoice) }}'">
                                     Cancel
                                 </x-secondary-button>
-                                <x-primary-button type="button">
+                                <x-primary-button type="submit" form="edit-invoice-form">
                                     Update Invoice
                                 </x-primary-button>
                             </div>
                         </div>
-                    </form>
                 </div>
             </div>
         </div>
