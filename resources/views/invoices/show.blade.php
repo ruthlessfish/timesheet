@@ -110,10 +110,13 @@
                                 <tr>
                                     <th
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                                        Type</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                                         Description</th>
                                     <th
                                         class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                        Hours</th>
+                                        Qty</th>
                                     <th
                                         class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                                         Rate</th>
@@ -125,15 +128,33 @@
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 @foreach($invoice->items as $item)
                                 <tr>
+                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                        @if($item->expense_id)
+                                        <span
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400">Expense</span>
+                                        @else
+                                        <span
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">Service</span>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                                         {{ $item->description }}
                                         @if($item->timeEntry)
                                         <span class="text-xs text-gray-500 dark:text-gray-400">({{
                                             $item->timeEntry->start_time->format('M d, Y') }})</span>
                                         @endif
+                                        @if($item->expense)
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">({{
+                                            $item->expense->expense_date->format('M d, Y') }})</span>
+                                        @endif
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-right text-gray-900 dark:text-gray-100">{{
-                                        number_format($item->quantity, 2) }}</td>
+                                    <td class="px-6 py-4 text-sm text-right text-gray-900 dark:text-gray-100">
+                                        @if($item->expense_id)
+                                        {{ number_format($item->quantity, 0) }}
+                                        @else
+                                        {{ number_format($item->quantity, 2) }}
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 text-sm text-right text-gray-900 dark:text-gray-100">${{
                                         number_format($item->rate, 2) }}</td>
                                     <td
@@ -141,14 +162,17 @@
                                         ${{ number_format($item->amount, 2) }}</td>
                                 </tr>
                                 @endforeach
+                                @if($invoice->total_hours > 0)
                                 <tr class="bg-gray-50 dark:bg-gray-900">
-                                    <td class="px-6 py-3 text-xs text-gray-500 dark:text-gray-400 uppercase">Total
+                                    <td colspan="2"
+                                        class="px-6 py-3 text-xs text-gray-500 dark:text-gray-400 uppercase">Total
                                         Hours:</td>
                                     <td class="px-6 py-3 text-right text-xs text-gray-500 dark:text-gray-400">
                                         {{ number_format($invoice->total_hours, 2) }}
                                     </td>
                                     <td colspan="2"></td>
                                 </tr>
+                                @endif
                             </tbody>
                         </table>
                     </div>

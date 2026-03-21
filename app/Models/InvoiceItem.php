@@ -13,6 +13,7 @@ class InvoiceItem extends Model
     protected $fillable = [
         'invoice_id',
         'time_entry_id',
+        'expense_id',
         'description',
         'quantity',
         'rate',
@@ -42,5 +43,10 @@ class InvoiceItem extends Model
     public function timeEntry(): BelongsTo
     {
         return $this->belongsTo(TimeEntry::class);
+    }
+
+    public function expense(): BelongsTo
+    {
+        return $this->belongsTo(Expense::class);
     }
 }

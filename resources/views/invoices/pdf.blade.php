@@ -250,7 +250,7 @@
             <tr>
                 <th style="width: 15%;">Item type</th>
                 <th style="width: 40%;">Description</th>
-                <th class="text-right" style="width: 15%;">Hours</th>
+                <th class="text-right" style="width: 15%;">Qty</th>
                 <th class="text-right" style="width: 15%;">Unit price</th>
                 <th class="text-right" style="width: 15%;">Amount</th>
             </tr>
@@ -259,7 +259,9 @@
             @foreach($invoice->items as $item)
             <tr>
                 <td>
-                    @if($item->timeEntry && $item->timeEntry->project)
+                    @if($item->expense_id)
+                    Expense
+                    @elseif($item->timeEntry && $item->timeEntry->project)
                     {{ ucfirst($item->timeEntry->project->type ?? 'Service') }}
                     @else
                     Service
@@ -268,7 +270,13 @@
                 <td>
                     <div class="item-description">{{ $item->description }}</div>
                 </td>
-                <td class="text-right">{{ number_format($item->quantity, 2) }}</td>
+                <td class="text-right">
+                    @if($item->expense_id)
+                    {{ number_format($item->quantity, 0) }}
+                    @else
+                    {{ number_format($item->quantity, 2) }}
+                    @endif
+                </td>
                 <td class="text-right">${{ number_format($item->rate, 2) }}</td>
                 <td class="text-right"><strong>${{ number_format($item->amount, 2) }}</strong></td>
             </tr>

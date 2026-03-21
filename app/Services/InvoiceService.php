@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\TimeEntry;
@@ -18,12 +19,13 @@ class InvoiceService
     ) {}
 
     /**
-     * Create invoice from time entries
+     * Create invoice from time entries and expenses
      *
      * @param  array<int>  $timeEntryIds
+     * @param  array<int>  $expenseIds
      * @param  array<string, mixed>  $data
      */
-    public function createFromTimeEntries(int $userId, int $clientId, array $timeEntryIds, array $data): Invoice
+    public function createFromTimeEntries(int $userId, int $clientId, array $timeEntryIds, array $data, array $expenseIds = []): Invoice
     {
         // Create the invoice
         $invoice = Invoice::create([
@@ -51,6 +53,22 @@ class InvoiceService
             $this->billingService->markAsInvoiced($timeEntries);
         }
 
+        // Add expenses as invoice items
+        if (! empty($expenseIds)) {
+            $expenses = Expense::whereIn('id', $expenseIds)
+                ->where('user_id', $userId)
+                ->where('client_id', $clientId)
+                ->where('is_billable', true)
+                ->where('is_invoiced', false)
+                ->get();
+
+            foreach ($expenses as $expense) {
+                $this->addExpenseToInvoice($invoice, $expense);
+            }
+
+            $this->markExpensesAsInvoiced($expenses);
+        }
+
         return $invoice->fresh(['client', 'items']);
     }
 
@@ -74,6 +92,21 @@ class InvoiceService
     }
 
     /**
+     * Add an expense as an invoice item
+     */
+    protected function addExpenseToInvoice(Invoice $invoice, Expense $expense): InvoiceItem
+    {
+        return InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'expense_id' => $expense->id,
+            'description' => $expense->description,
+            'quantity' => 1,
+            'rate' => $expense->amount,
+            'amount' => $expense->amount,
+        ]);
+    }
+
+    /**
      * Update an existing invoice
      *
      * @param  array<string, mixed>  $data
@@ -93,7 +126,7 @@ class InvoiceService
     }
 
     /**
-     * Delete invoice and unmark time entries
+     * Delete invoice and unmark time entries and expenses
      */
     public function deleteInvoice(Invoice $invoice): void
     {
@@ -102,10 +135,21 @@ class InvoiceService
             ->whereNotNull('time_entry_id')
             ->pluck('time_entry_id');
 
+        // Get expense IDs before deleting items
+        $expenseIds = $invoice->items()
+            ->whereNotNull('expense_id')
+            ->pluck('expense_id');
+
         // Unmark time entries
         if ($timeEntryIds->isNotEmpty()) {
             $timeEntries = TimeEntry::whereIn('id', $timeEntryIds)->get();
             $this->billingService->markAsNotInvoiced($timeEntries);
+        }
+
+        // Unmark expenses
+        if ($expenseIds->isNotEmpty()) {
+            $expenses = Expense::whereIn('id', $expenseIds)->get();
+            $this->markExpensesAsNotInvoiced($expenses);
         }
 
         // Delete the invoice (cascade will delete items)
@@ -128,6 +172,19 @@ class InvoiceService
     public function getUnbilledEntriesForClient(int $clientId, int $userId): Collection
     {
         return $this->billingService->getUnbilledTimeEntries($clientId, $userId);
+    }
+
+    /**
+     * Get unbilled expenses for a client
+     */
+    public function getUnbilledExpensesForClient(int $clientId, int $userId): Collection
+    {
+        return Expense::where('client_id', $clientId)
+            ->where('user_id', $userId)
+            ->where('is_billable', true)
+            ->where('is_invoiced', false)
+            ->orderBy('expense_date')
+            ->get();
     }
 
     /**
@@ -185,5 +242,27 @@ class InvoiceService
         $invoice->update(['status' => 'overdue']);
 
         return $invoice->fresh();
+    }
+
+    /**
+     * Mark expenses as invoiced
+     *
+     * @param  Collection<int, Expense>  $expenses
+     */
+    public function markExpensesAsInvoiced(Collection $expenses): void
+    {
+        Expense::whereIn('id', $expenses->pluck('id'))
+            ->update(['is_invoiced' => true]);
+    }
+
+    /**
+     * Mark expenses as not invoiced
+     *
+     * @param  Collection<int, Expense>  $expenses
+     */
+    public function markExpensesAsNotInvoiced(Collection $expenses): void
+    {
+        Expense::whereIn('id', $expenses->pluck('id'))
+            ->update(['is_invoiced' => false]);
     }
 }

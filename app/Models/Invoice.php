@@ -77,6 +77,6 @@ class Invoice extends Model
 
     public function getTotalHoursAttribute(): float
     {
-        return $this->items()->sum('quantity');
+        return $this->items()->whereNotNull('time_entry_id')->sum('quantity');
     }
 }

@@ -38,16 +38,21 @@ class InvoiceController extends Controller
             ->orderBy('name')
             ->get();
 
-        // Get unbilled time entries if client is selected
+        // Get unbilled time entries and expenses if client is selected
         $unbilledTimeEntries = collect();
+        $unbilledExpenses = collect();
         if ($request->has('client_id')) {
             $unbilledTimeEntries = $this->invoiceService->getUnbilledEntriesForClient(
                 $request->client_id,
                 auth()->id()
             );
+            $unbilledExpenses = $this->invoiceService->getUnbilledExpensesForClient(
+                $request->client_id,
+                auth()->id()
+            );
         }
 
-        return view('invoices.create', compact('clients', 'unbilledTimeEntries'));
+        return view('invoices.create', compact('clients', 'unbilledTimeEntries', 'unbilledExpenses'));
     }
 
     /**
@@ -64,13 +69,16 @@ class InvoiceController extends Controller
             'status' => 'required|in:draft,sent,paid,overdue,cancelled',
             'time_entries' => 'nullable|array',
             'time_entries.*' => 'exists:time_entries,id',
+            'expenses' => 'nullable|array',
+            'expenses.*' => 'exists:expenses,id',
         ]);
 
         $invoice = $this->invoiceService->createFromTimeEntries(
             userId: auth()->id(),
             clientId: $validated['client_id'],
             timeEntryIds: $validated['time_entries'] ?? [],
-            data: $validated
+            data: $validated,
+            expenseIds: $validated['expenses'] ?? [],
         );
 
         return redirect()->route('invoices.show', $invoice)
@@ -84,7 +92,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('view', $invoice);
 
-        $invoice->load(['client', 'items.timeEntry']);
+        $invoice->load(['client', 'items.timeEntry', 'items.expense']);
 
         return view('invoices.show', compact('invoice'));
     }

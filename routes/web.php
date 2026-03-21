@@ -4,6 +4,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
@@ -33,6 +34,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('time-entries', TimeEntryController::class);
     Route::resource('invoices', InvoiceController::class);
+    Route::resource('expenses', ExpenseController::class);
 
     // Time entry specific routes
     Route::post('/time-entries/{timeEntry}/stop', [TimeEntryController::class, 'stop'])->name('time-entries.stop');

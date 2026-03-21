@@ -147,6 +147,46 @@
                                     time entries.</p>
                             </div>
                             @endif
+
+                            @if($unbilledExpenses->count() > 0)
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select
+                                    Expenses to Include</label>
+                                <div
+                                    class="border border-gray-200 dark:border-gray-700 rounded-md p-4 max-h-96 overflow-y-auto">
+                                    @foreach($unbilledExpenses as $expense)
+                                    <div class="flex items-start space-x-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="expenses[]" value="{{ $expense->id }}"
+                                            id="expense_{{ $expense->id }}" {{ in_array($expense->id, old('expenses',
+                                        []))
+                                        ? 'checked' : '' }}
+                                        class="mt-1 rounded border-gray-300 dark:border-gray-600 text-indigo-600
+                                        focus:ring-indigo-500">
+                                        <label for="expense_{{ $expense->id }}" class="flex-1 cursor-pointer">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                {{ $expense->description }}
+                                            </div>
+                                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                {{ $expense->expense_date->format('M d, Y') }}
+                                                @if($expense->category)
+                                                · {{ $expense->category }}
+                                                @endif
+                                            </div>
+                                        </label>
+                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                            ${{ number_format($expense->amount, 2) }}
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @elseif(request('client_id') && $unbilledTimeEntries->count() > 0)
+                            <div
+                                class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-md p-4">
+                                <p class="text-sm text-yellow-800 dark:text-yellow-400">No unbilled expenses found
+                                    for this client.</p>
+                            </div>
+                            @endif
                         </div>
 
                         <div class="mt-6 flex justify-end space-x-3">

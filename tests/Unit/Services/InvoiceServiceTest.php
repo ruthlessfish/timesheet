@@ -3,6 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Models\Client;
+use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Project;
@@ -315,5 +316,181 @@ class InvoiceServiceTest extends TestCase
         // Should only have 1 item (user's entry)
         $this->assertCount(1, $invoice->items);
         $this->assertEquals($userEntry->id, $invoice->items->first()->time_entry_id);
+    }
+
+    public function test_creates_invoice_with_expenses()
+    {
+        $user = User::factory()->create();
+        $client = Client::factory()->for($user)->create();
+
+        $expense = Expense::factory()->for($client)->for($user)->create([
+            'amount' => 150.00,
+            'is_billable' => true,
+            'is_invoiced' => false,
+        ]);
+
+        $invoice = $this->invoiceService->createFromTimeEntries(
+            userId: $user->id,
+            clientId: $client->id,
+            timeEntryIds: [],
+            data: [
+                'issue_date' => now(),
+                'due_date' => now()->addDays(30),
+                'tax_rate' => 0,
+            ],
+            expenseIds: [$expense->id],
+        );
+
+        $this->assertCount(1, $invoice->items);
+        $this->assertEquals($expense->id, $invoice->items->first()->expense_id);
+        $this->assertEquals(150.00, $invoice->subtotal);
+    }
+
+    public function test_creates_invoice_with_time_entries_and_expenses()
+    {
+        $user = User::factory()->create();
+        $client = Client::factory()->for($user)->create(['hourly_rate' => 100]);
+        $project = Project::factory()->for($client)->for($user)->create(['hourly_rate' => null]);
+
+        $entry = TimeEntry::factory()->for($project)->for($user)->create([
+            'hourly_rate' => null,
+            'duration' => 60,
+            'is_billable' => true,
+            'is_invoiced' => false,
+            'end_time' => now(),
+        ]);
+
+        $expense = Expense::factory()->for($client)->for($user)->create([
+            'amount' => 50.00,
+            'is_billable' => true,
+            'is_invoiced' => false,
+        ]);
+
+        $invoice = $this->invoiceService->createFromTimeEntries(
+            userId: $user->id,
+            clientId: $client->id,
+            timeEntryIds: [$entry->id],
+            data: [
+                'issue_date' => now(),
+                'due_date' => now()->addDays(30),
+                'tax_rate' => 10,
+            ],
+            expenseIds: [$expense->id],
+        );
+
+        $this->assertCount(2, $invoice->items);
+        $this->assertEquals(150.00, $invoice->subtotal);
+        $this->assertEquals(15.00, $invoice->tax_amount);
+        $this->assertEquals(165.00, $invoice->total);
+    }
+
+    public function test_marks_expenses_as_invoiced()
+    {
+        $user = User::factory()->create();
+        $client = Client::factory()->for($user)->create();
+
+        $expense = Expense::factory()->for($client)->for($user)->create([
+            'is_invoiced' => false,
+        ]);
+
+        $this->assertFalse($expense->is_invoiced);
+
+        $this->invoiceService->createFromTimeEntries(
+            userId: $user->id,
+            clientId: $client->id,
+            timeEntryIds: [],
+            data: [
+                'issue_date' => now(),
+                'due_date' => now()->addDays(30),
+            ],
+            expenseIds: [$expense->id],
+        );
+
+        $this->assertTrue($expense->fresh()->is_invoiced);
+    }
+
+    public function test_deletes_invoice_and_unmarks_expenses()
+    {
+        $user = User::factory()->create();
+        $client = Client::factory()->for($user)->create();
+
+        $expense = Expense::factory()->for($client)->for($user)->create([
+            'is_invoiced' => false,
+        ]);
+
+        $invoice = $this->invoiceService->createFromTimeEntries(
+            userId: $user->id,
+            clientId: $client->id,
+            timeEntryIds: [],
+            data: [
+                'issue_date' => now(),
+                'due_date' => now()->addDays(30),
+            ],
+            expenseIds: [$expense->id],
+        );
+
+        $this->assertTrue($expense->fresh()->is_invoiced);
+
+        $this->invoiceService->deleteInvoice($invoice);
+
+        $this->assertNull(Invoice::find($invoice->id));
+        $this->assertFalse($expense->fresh()->is_invoiced);
+    }
+
+    public function test_gets_unbilled_expenses_for_client()
+    {
+        $user = User::factory()->create();
+        $client = Client::factory()->for($user)->create();
+
+        $unbilled = Expense::factory()->for($client)->for($user)->create([
+            'is_billable' => true,
+            'is_invoiced' => false,
+        ]);
+
+        Expense::factory()->for($client)->for($user)->create([
+            'is_billable' => true,
+            'is_invoiced' => true,
+        ]);
+
+        Expense::factory()->for($client)->for($user)->create([
+            'is_billable' => false,
+            'is_invoiced' => false,
+        ]);
+
+        $expenses = $this->invoiceService->getUnbilledExpensesForClient($client->id, $user->id);
+
+        $this->assertCount(1, $expenses);
+        $this->assertEquals($unbilled->id, $expenses->first()->id);
+    }
+
+    public function test_only_includes_client_expenses_on_invoice()
+    {
+        $user = User::factory()->create();
+        $client = Client::factory()->for($user)->create();
+        $otherClient = Client::factory()->for($user)->create();
+
+        $clientExpense = Expense::factory()->for($client)->for($user)->create([
+            'is_billable' => true,
+            'is_invoiced' => false,
+        ]);
+
+        $otherExpense = Expense::factory()->for($otherClient)->for($user)->create([
+            'is_billable' => true,
+            'is_invoiced' => false,
+        ]);
+
+        $invoice = $this->invoiceService->createFromTimeEntries(
+            userId: $user->id,
+            clientId: $client->id,
+            timeEntryIds: [],
+            data: [
+                'issue_date' => now(),
+                'due_date' => now()->addDays(30),
+            ],
+            expenseIds: [$clientExpense->id, $otherExpense->id],
+        );
+
+        $this->assertCount(1, $invoice->items);
+        $this->assertEquals($clientExpense->id, $invoice->items->first()->expense_id);
     }
 }
