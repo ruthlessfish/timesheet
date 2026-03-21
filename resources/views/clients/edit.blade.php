@@ -9,7 +9,7 @@
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
-                    <form action="{{ route('clients.update', $client) }}" method="POST">
+                    <form id="edit-client-form" action="{{ route('clients.update', $client) }}" method="POST">
                         @csrf
                         @method('PUT')
 
@@ -89,6 +89,8 @@
                             </div>
                         </div>
 
+                    </form>
+
                         <div class="mt-6 flex justify-between space-x-3">
                             <x-delete-button :url="route('clients.destroy', $client)"
                                 confirm-text="Are you sure you want to delete this client?" />
@@ -97,12 +99,11 @@
                                     onclick="window.location='{{ route('clients.index') }}'">
                                     Cancel
                                 </x-secondary-button>
-                                <x-primary-button type="button">
+                                <x-primary-button type="submit" form="edit-client-form">
                                     Update Client
                                 </x-primary-button>
                             </div>
                         </div>
-                    </form>
                 </div>
             </div>
         </div>
