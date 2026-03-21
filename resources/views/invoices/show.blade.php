@@ -126,10 +126,10 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                @foreach($invoice->items as $item)
+                                @foreach($invoice->consolidated_items as $item)
                                 <tr>
                                     <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                        @if($item->expense_id)
+                                        @if($item->type === 'expense')
                                         <span
                                             class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400">Expense</span>
                                         @else
@@ -139,17 +139,9 @@
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                                         {{ $item->description }}
-                                        @if($item->timeEntry)
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">({{
-                                            $item->timeEntry->start_time->format('M d, Y') }})</span>
-                                        @endif
-                                        @if($item->expense)
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">({{
-                                            $item->expense->expense_date->format('M d, Y') }})</span>
-                                        @endif
                                     </td>
                                     <td class="px-6 py-4 text-sm text-right text-gray-900 dark:text-gray-100">
-                                        @if($item->expense_id)
+                                        @if($item->type === 'expense')
                                         {{ number_format($item->quantity, 0) }}
                                         @else
                                         {{ number_format($item->quantity, 2) }}

@@ -256,13 +256,11 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($invoice->items as $item)
+            @foreach($invoice->consolidated_items as $item)
             <tr>
                 <td>
-                    @if($item->expense_id)
+                    @if($item->type === 'expense')
                     Expense
-                    @elseif($item->timeEntry && $item->timeEntry->project)
-                    {{ ucfirst($item->timeEntry->project->type ?? 'Service') }}
                     @else
                     Service
                     @endif
@@ -271,7 +269,7 @@
                     <div class="item-description">{{ $item->description }}</div>
                 </td>
                 <td class="text-right">
-                    @if($item->expense_id)
+                    @if($item->type === 'expense')
                     {{ number_format($item->quantity, 0) }}
                     @else
                     {{ number_format($item->quantity, 2) }}

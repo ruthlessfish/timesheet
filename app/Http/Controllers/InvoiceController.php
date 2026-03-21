@@ -92,7 +92,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('view', $invoice);
 
-        $invoice->load(['client', 'items.timeEntry', 'items.expense']);
+        $invoice->load(['client', 'items.timeEntry.project', 'items.expense']);
 
         return view('invoices.show', compact('invoice'));
     }
@@ -156,7 +156,7 @@ class InvoiceController extends Controller
     {
         $this->authorize('view', $invoice);
 
-        $invoice->load(['client', 'items', 'user']);
+        $invoice->load(['client', 'items.timeEntry.project', 'items.expense', 'user']);
 
         $pdf = $this->invoiceService->generatePDF($invoice);
 
