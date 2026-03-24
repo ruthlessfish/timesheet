@@ -38,8 +38,10 @@
                             <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">INVOICE</h1>
                             <p class="text-gray-600 dark:text-gray-400 mt-1">{{ $invoice->invoice_number }}</p>
                         </div>
-                        <div class="text-right">
-                            <span class="px-3 py-1 text-sm font-semibold rounded-full {{ $invoice->status_css }}">
+                        <div class="text-right relative">
+                            <span class="block absolute top-40 right-10 px-10 py-3 text-[200px] opacity-30 font-semibold rounded-full {{
+                                $invoice->status_css }}"
+                                style="transform: rotate(-45deg);text-outline:black;text-transform:uppercase ;background:transparent;">
                                 {{ ucfirst($invoice->status) }}
                             </span>
                         </div>
