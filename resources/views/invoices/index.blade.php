@@ -4,9 +4,22 @@
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 {{ __('Invoices') }}
             </h2>
-            <x-primary-button type="button" onclick="window.location='{{ route('invoices.create') }}'">
-                New Invoice
-            </x-primary-button>
+            <div class="flex items-center space-x-2">
+                @if($showTrashed)
+                <a href="{{ route('invoices.index') }}"
+                    class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 inline-flex items-center px-4 py-2 border border-gray-400 dark:border-gray-600 rounded-md font-semibold text-xs uppercase tracking-widest transition">
+                    All Invoices
+                </a>
+                @else
+                <a href="{{ route('invoices.index', ['trashed' => 1]) }}"
+                    class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 inline-flex items-center px-4 py-2 border border-gray-400 dark:border-gray-600 rounded-md font-semibold text-xs uppercase tracking-widest transition">
+                    View Trash
+                </a>
+                <x-primary-button type="button" onclick="window.location='{{ route('invoices.create') }}'">
+                    New Invoice
+                </x-primary-button>
+                @endif
+            </div>
         </div>
     </x-slot>
 
@@ -69,12 +82,33 @@
                                         ${{ number_format($invoice->total, 2) }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
+                                        @if($invoice->trashed())
+                                        <span
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                            Deleted
+                                        </span>
+                                        @else
                                         <span
                                             class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $invoice->status_css }}">
                                             {{ ucfirst($invoice->status) }}
                                         </span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                        @if($invoice->trashed())
+                                        <a href="{{ route('invoices.show', $invoice) }}"
+                                            class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">View</a>
+                                        <form method="POST" action="{{ route('invoices.restore', $invoice) }}"
+                                            class="inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit"
+                                                class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300">Restore</button>
+                                        </form>
+                                        <x-delete-button :url="route('invoices.force-delete', $invoice)"
+                                            confirm-text="Permanently delete this invoice? This cannot be undone."
+                                            show-icon=false label="Delete Forever" />
+                                        @else
                                         <a href="{{ route('invoices.show', $invoice) }}"
                                             class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">View</a>
                                         <a href="{{ route('invoices.edit', $invoice) }}"
@@ -84,14 +118,19 @@
                                         <x-delete-button :url="route('invoices.destroy', $invoice)"
                                             confirm-text="Are you sure you want to delete this invoice?"
                                             show-icon=false />
+                                        @endif
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
                                     <td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                                        @if($showTrashed)
+                                        No deleted invoices found.
+                                        @else
                                         No invoices found. <a href="{{ route('invoices.create') }}"
                                             class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">Create
                                             your first invoice</a>
+                                        @endif
                                     </td>
                                 </tr>
                                 @endforelse

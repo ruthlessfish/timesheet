@@ -15,7 +15,8 @@ class DeleteButton extends Component
         public $url,
         public $confirmText = 'Are you sure?',
         public $showText = true,
-        public $showIcon = true
+        public $showIcon = true,
+        public $label = 'Delete'
     ) {}
 
     /**

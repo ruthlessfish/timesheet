@@ -126,34 +126,66 @@ class InvoiceService
     }
 
     /**
-     * Delete invoice and unmark time entries and expenses
+     * Soft delete invoice and unmark time entries and expenses
      */
     public function deleteInvoice(Invoice $invoice): void
     {
-        // Get time entries before deleting items
+        // Unmark time entries
         $timeEntryIds = $invoice->items()
             ->whereNotNull('time_entry_id')
             ->pluck('time_entry_id');
 
-        // Get expense IDs before deleting items
-        $expenseIds = $invoice->items()
-            ->whereNotNull('expense_id')
-            ->pluck('expense_id');
-
-        // Unmark time entries
         if ($timeEntryIds->isNotEmpty()) {
             $timeEntries = TimeEntry::whereIn('id', $timeEntryIds)->get();
             $this->billingService->markAsNotInvoiced($timeEntries);
         }
 
         // Unmark expenses
+        $expenseIds = $invoice->items()
+            ->whereNotNull('expense_id')
+            ->pluck('expense_id');
+
         if ($expenseIds->isNotEmpty()) {
             $expenses = Expense::whereIn('id', $expenseIds)->get();
             $this->markExpensesAsNotInvoiced($expenses);
         }
 
-        // Delete the invoice (cascade will delete items)
         $invoice->delete();
+    }
+
+    /**
+     * Restore a soft-deleted invoice and re-mark time entries and expenses
+     */
+    public function restoreInvoice(Invoice $invoice): void
+    {
+        $invoice->restore();
+
+        $timeEntryIds = $invoice->items()
+            ->whereNotNull('time_entry_id')
+            ->pluck('time_entry_id');
+
+        if ($timeEntryIds->isNotEmpty()) {
+            $timeEntries = TimeEntry::whereIn('id', $timeEntryIds)->get();
+            $this->billingService->markAsInvoiced($timeEntries);
+        }
+
+        $expenseIds = $invoice->items()
+            ->whereNotNull('expense_id')
+            ->pluck('expense_id');
+
+        if ($expenseIds->isNotEmpty()) {
+            $expenses = Expense::whereIn('id', $expenseIds)->get();
+            $this->markExpensesAsInvoiced($expenses);
+        }
+    }
+
+    /**
+     * Permanently delete a soft-deleted invoice and its items
+     */
+    public function forceDeleteInvoice(Invoice $invoice): void
+    {
+        $invoice->items()->delete();
+        $invoice->forceDelete();
     }
 
     /**

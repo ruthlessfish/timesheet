@@ -33,14 +33,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/time-entries/import/template', [TimeEntryController::class, 'downloadTemplate'])->name('time-entries.import-template');
 
     Route::resource('time-entries', TimeEntryController::class);
-    Route::resource('invoices', InvoiceController::class);
+    Route::resource('invoices', InvoiceController::class)->except('show');
     Route::resource('expenses', ExpenseController::class);
 
     // Time entry specific routes
     Route::post('/time-entries/{timeEntry}/stop', [TimeEntryController::class, 'stop'])->name('time-entries.stop');
 
     // Invoice specific routes
+    Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show')->withTrashed();
     Route::get('/invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
+    Route::patch('/invoices/{invoice}/restore', [InvoiceController::class, 'restore'])->name('invoices.restore')->withTrashed();
+    Route::delete('/invoices/{invoice}/force-delete', [InvoiceController::class, 'forceDelete'])->name('invoices.force-delete')->withTrashed();
 
     // Calendar routes
     Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');

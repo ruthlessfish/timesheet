@@ -7,7 +7,7 @@
         <x-heroicons::mini.solid.trash class="mr-2" />
         @endif
         @if($showText === true)
-        Delete
+        {{ $label }}
         @endif
     </button>
 </form>

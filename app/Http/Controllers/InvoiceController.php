@@ -18,14 +18,21 @@ class InvoiceController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $invoices = auth()->user()->invoices()
-            ->with('client')
-            ->orderBy('issue_date', 'desc')
-            ->paginate(15);
+        $showTrashed = $request->boolean('trashed');
 
-        return view('invoices.index', compact('invoices'));
+        $query = auth()->user()->invoices()
+            ->with('client')
+            ->orderBy('issue_date', 'desc');
+
+        if ($showTrashed) {
+            $query->onlyTrashed();
+        }
+
+        $invoices = $query->paginate(15)->withQueryString();
+
+        return view('invoices.index', compact('invoices', 'showTrashed'));
     }
 
     /**
@@ -97,9 +104,6 @@ class InvoiceController extends Controller
         return view('invoices.show', compact('invoice'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Invoice $invoice)
     {
         $this->authorize('update', $invoice);
@@ -137,7 +141,7 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified resource from storage (soft delete).
      */
     public function destroy(Invoice $invoice)
     {
@@ -147,6 +151,32 @@ class InvoiceController extends Controller
 
         return redirect()->route('invoices.index')
             ->with('success', 'Invoice deleted successfully.');
+    }
+
+    /**
+     * Restore a soft-deleted invoice.
+     */
+    public function restore(Invoice $invoice)
+    {
+        $this->authorize('restore', $invoice);
+
+        $this->invoiceService->restoreInvoice($invoice);
+
+        return redirect()->route('invoices.show', $invoice)
+            ->with('success', 'Invoice restored successfully.');
+    }
+
+    /**
+     * Permanently delete a soft-deleted invoice.
+     */
+    public function forceDelete(Invoice $invoice)
+    {
+        $this->authorize('forceDelete', $invoice);
+
+        $this->invoiceService->forceDeleteInvoice($invoice);
+
+        return redirect()->route('invoices.index')
+            ->with('success', 'Invoice permanently deleted.');
     }
 
     /**

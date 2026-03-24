@@ -5,6 +5,17 @@
                 Invoice {{ $invoice->invoice_number }}
             </h2>
             <div class="flex space-x-2">
+                @if($invoice->trashed())
+                <form method="POST" action="{{ route('invoices.restore', $invoice) }}">
+                    @csrf
+                    @method('PATCH')
+                    <x-primary-button type="submit">
+                        Restore Invoice
+                    </x-primary-button>
+                </form>
+                <x-delete-button :url="route('invoices.force-delete', $invoice)"
+                    confirm-text="Permanently delete this invoice? This cannot be undone." />
+                @else
                 <a href="{{ route('invoices.pdf', $invoice) }}"
                     class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 inline-flex items-center px-4 py-2 border border-green-600 dark:border-green-400 rounded-md font-semibold text-xs uppercase tracking-widest hover:bg-green-50 dark:hover:bg-green-900/20 transition">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -17,6 +28,7 @@
                 <x-primary-button type="button" onclick="window.location='{{ route('invoices.edit', $invoice) }}'">
                     Edit Invoice
                 </x-primary-button>
+                @endif
             </div>
         </div>
     </x-slot>
@@ -27,6 +39,14 @@
             <div
                 class="mb-4 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-400 px-4 py-3 rounded">
                 {{ session('success') }}
+            </div>
+            @endif
+
+            @if($invoice->trashed())
+            <div
+                class="mb-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-400 px-4 py-3 rounded">
+                This invoice has been deleted on {{ $invoice->deleted_at->format('M d, Y') }}. Restore it to make it
+                active again.
             </div>
             @endif
 
