@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\TimeEntry;
-use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class TimeEntryService
 {
@@ -21,25 +21,30 @@ class TimeEntryService
      */
     public function startTimer(int $userId, int $projectId, array $data = []): TimeEntry
     {
-        // Check for active timers
-        $activeTimer = TimeEntry::where('user_id', $userId)
-            ->whereNull('end_time')
-            ->first();
+        // Use a transaction and row-locking to avoid race conditions when multiple
+        // processes attempt to start a timer for the same user concurrently.
+        return DB::transaction(function () use ($userId, $projectId, $data) {
+            // Re-check for active timers while holding a lock
+            $activeTimer = TimeEntry::where('user_id', $userId)
+                ->whereNull('end_time')
+                ->lockForUpdate()
+                ->first();
 
-        if ($activeTimer) {
-            throw new \Exception('You already have an active timer running. Please stop it before starting a new one.');
-        }
+            if ($activeTimer) {
+                throw new \Exception('You already have an active timer running. Please stop it before starting a new one.');
+            }
 
-        return TimeEntry::create([
-            'user_id' => $userId,
-            'project_id' => $projectId,
-            'description' => $data['description'] ?? null,
-            'start_time' => $data['start_time'] ?? now(),
-            'end_time' => null,
-            'hourly_rate' => $data['hourly_rate'] ?? null,
-            'is_billable' => $data['is_billable'] ?? true,
-            'is_invoiced' => false,
-        ]);
+            return TimeEntry::create([
+                'user_id' => $userId,
+                'project_id' => $projectId,
+                'description' => $data['description'] ?? null,
+                'start_time' => $data['start_time'] ?? now(),
+                'end_time' => null,
+                'hourly_rate' => $data['hourly_rate'] ?? null,
+                'is_billable' => $data['is_billable'] ?? true,
+                'is_invoiced' => false,
+            ]);
+        });
     }
 
     /**
