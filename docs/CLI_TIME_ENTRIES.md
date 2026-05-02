@@ -37,3 +37,7 @@ Stop a timer non-interactively:
 ## Notes
 
 - These commands use the existing `TimeEntryService` and model logic. They follow the application's service-layer pattern and will be extended as the project evolves.
+
+## CI
+
+This repository includes CI that runs tests across SQLite, MySQL, and PostgreSQL. See `docs/CI.md` for details on running tests locally and the GitHub Actions workflow.
