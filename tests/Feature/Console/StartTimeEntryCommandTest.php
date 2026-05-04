@@ -3,6 +3,7 @@
 namespace Tests\Feature\Console;
 
 use App\Models\Project;
+use App\Models\TimeEntry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -32,7 +33,7 @@ class StartTimeEntryCommandTest extends TestCase
         $project = Project::factory()->for($user)->create();
 
         // create active timer
-        \App\Models\TimeEntry::factory()->create([
+        TimeEntry::factory()->create([
             'user_id' => $user->id,
             'project_id' => $project->id,
             'start_time' => now()->subMinutes(30),
@@ -51,8 +52,16 @@ class StartTimeEntryCommandTest extends TestCase
         $project1 = Project::factory()->for($user)->create(['name' => 'A Project']);
         $project2 = Project::factory()->for($user)->create(['name' => 'B Project']);
 
+        $label1 = 'A Project ('.($project1->client->name ?? 'No client').')';
+        $label2 = 'B Project ('.($project2->client->name ?? 'No client').')';
+
         $this->artisan('time:start', ['--user' => $user->id])
-            ->expectsQuestion('Select a project', $project1->name . ' (' . ($project1->client->name ?? 'No client') . ')')
+            ->expectsSearch(
+                'Select a project',
+                answer: (string) $project1->id,
+                search: '',
+                answers: [$project1->id, $project2->id, $label1, $label2],
+            )
             ->run();
 
         $this->assertDatabaseHas('time_entries', [

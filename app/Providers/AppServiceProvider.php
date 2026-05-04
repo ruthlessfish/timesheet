@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use App\Console\Commands\StartTimeEntryCommand;
-use App\Console\Commands\StopTimeEntryCommand;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -16,13 +14,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register console commands
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                StartTimeEntryCommand::class,
-                StopTimeEntryCommand::class,
-            ]);
-        }
         //
     }
 

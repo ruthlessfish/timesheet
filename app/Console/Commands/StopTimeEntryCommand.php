@@ -6,6 +6,9 @@ use App\Models\User;
 use App\Services\TimeEntryService;
 use Illuminate\Console\Command;
 
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\error;
+
 class StopTimeEntryCommand extends Command
 {
     /**
@@ -28,7 +31,7 @@ class StopTimeEntryCommand extends Command
         $userArg = $this->option('user');
 
         if (! $userArg) {
-            $this->error('Please provide --user (id or email).');
+            error('Please provide --user (id or email).');
 
             return 1;
         }
@@ -36,7 +39,7 @@ class StopTimeEntryCommand extends Command
         $user = User::where('id', $userArg)->orWhere('email', $userArg)->first();
 
         if (! $user) {
-            $this->error('User not found.');
+            error('User not found.');
 
             return 1;
         }
@@ -44,7 +47,7 @@ class StopTimeEntryCommand extends Command
         $active = $this->timeEntryService->getActiveTimer($user->id);
 
         if (! $active) {
-            $this->error('No active timer found for this user.');
+            error('No active timer found for this user.');
 
             return 1;
         }
@@ -52,13 +55,17 @@ class StopTimeEntryCommand extends Command
         // If project-id provided and doesn't match active, error
         $projectId = $this->option('project-id');
         if ($projectId && (int) $projectId !== $active->project_id) {
-            $this->error('Active timer project does not match provided --project-id.');
+            error('Active timer project does not match provided --project-id.');
 
             return 1;
         }
 
         if (! $this->option('confirm')) {
-            $ok = $this->confirm(sprintf('Stop timer #%d for project %s started at %s?', $active->id, $active->project->name, $active->start_time->toDateTimeString()));
+            $ok = confirm(
+                label: sprintf('Stop timer #%d for project "%s" started at %s?', $active->id, $active->project->name, $active->start_time->toDateTimeString()),
+                default: true,
+            );
+
             if (! $ok) {
                 $this->info('Aborted.');
 

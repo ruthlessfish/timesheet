@@ -28,6 +28,8 @@ This cascade appears in `TimeEntry::getAmountAttribute()`, `Project::getTotalAmo
 
 ## Code Conventions
 
+**Commands**: Use `php artisan make:` for all new files. Pass `--no-interaction` to ensure non-interactive generation. For models, also generate factories and seeders. When interaction is required use **Laravel Prompts** to gather necessary information.
+
 **Controllers**: Use `AuthorizesRequests` trait. Always eager load relationships (`->with('project.client')`). Authorization via `$this->authorize('view', $model)`. **New code must use FormRequest classes** for validation (`app/Http/Requests/`). Existing controllers use inline validation (legacy—migrate to FormRequests over time).
 
 **Models**: Relationships are return-typed (`BelongsTo`, `HasMany`). Computed attributes use `getXxxAttribute()`. Casts use `$casts` property (most models) or `casts()` method (`Company`). `Project` uses `HasStatus` trait (`app/Models/Traits/`) for status helpers and CSS classes.

@@ -7,6 +7,9 @@ use App\Models\User;
 use App\Services\TimeEntryService;
 use Illuminate\Console\Command;
 
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\search;
+
 class StartTimeEntryCommand extends Command
 {
     /**
@@ -35,7 +38,7 @@ class StartTimeEntryCommand extends Command
         $userArg = $this->option('user');
 
         if (! $userArg) {
-            $this->error('Please provide --user (id or email).');
+            error('Please provide --user (id or email).');
 
             return 1;
         }
@@ -43,7 +46,7 @@ class StartTimeEntryCommand extends Command
         $user = User::where('id', $userArg)->orWhere('email', $userArg)->first();
 
         if (! $user) {
-            $this->error('User not found.');
+            error('User not found.');
 
             return 1;
         }
@@ -52,24 +55,31 @@ class StartTimeEntryCommand extends Command
         $projectId = $this->option('project-id');
 
         if (! $projectId) {
-            $projects = Project::where('user_id', $user->id)->orderBy('name')->get();
+            $projects = Project::where('user_id', $user->id)->with('client')->orderBy('name')->get();
 
             if ($projects->isEmpty()) {
-                $this->error('No projects found for this user. Create a project first.');
+                error('No projects found for this user. Create a project first.');
 
                 return 1;
             }
 
-            $choices = $projects->mapWithKeys(fn ($p) => [$p->id => $p->name.' ('.($p->client->name ?? 'No client').')'])->toArray();
-
-            $selected = $this->choice('Select a project', $choices, array_key_first($choices));
-
-            // choice returns the selected value; we need the id => name map, so find id by value
-            $projectId = array_search($selected, $choices, true);
+            $projectId = search(
+                label: 'Select a project',
+                options: function (string $value) use ($projects) {
+                    return $projects
+                        ->when(
+                            $value !== '',
+                            fn ($col) => $col->filter(fn ($p) => str_contains(strtolower($p->name), strtolower($value)))
+                        )
+                        ->mapWithKeys(fn ($p) => [$p->id => $p->name.' ('.($p->client->name ?? 'No client').')'])
+                        ->all();
+                },
+                placeholder: 'Search projects...',
+            );
         } else {
             $project = Project::where('user_id', $user->id)->find($projectId);
             if (! $project) {
-                $this->error('Project not found for this user.');
+                error('Project not found for this user.');
 
                 return 1;
             }
@@ -79,7 +89,6 @@ class StartTimeEntryCommand extends Command
             'description' => $this->option('description'),
             'is_billable' => (bool) $this->option('billable'),
         ];
-
         try {
             $entry = $this->timeEntryService->startTimer($user->id, (int) $projectId, $data);
 
