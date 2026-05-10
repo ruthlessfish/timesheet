@@ -17,9 +17,9 @@ class TrackTimeEntryCommand extends Command
         {--project-id= : Project id} 
         {--description= : Description} 
         {--duration= Duration in minutes}
-        {--billable=1 : Is billable (0|1)}';
+        {--billable=1 : Is billable (0|1)}
         {start :  Start time (Y-m-d H:i:s)}
-        {end : End time (Y-m-d H:i:s)}
+        {end : End time (Y-m-d H:i:s)}';
 
     /**
      * The console command description.
