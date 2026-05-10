@@ -3,59 +3,57 @@
 namespace App\Console\Commands;
 
 use App\Console\Command;
-use App\Models\Project;
-use App\Models\User;
 use App\Services\TimeEntryService;
 
-use function Laravel\Prompts\error;
-use function Laravel\Prompts\search;
-
-class StartTimeEntryCommand extends Command
+class TrackTimeEntryCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
-     * We require --user for now and provide --project-id or interactive selection.
-     *
      * @var string
      */
-    protected $signature = 'time:start 
+    protected $signature = 'time:track 
         {--user= : User id or email} 
         {--project-id= : Project id} 
         {--description= : Description} 
-        {--billable=1 : Is billable (0|1)}
-        {--description= : Description} 
+        {--duration= Duration in minutes}
         {--billable=1 : Is billable (0|1)}';
+        {start :  Start time (Y-m-d H:i:s)}
+        {end : End time (Y-m-d H:i:s)}
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Start a new time entry (timer) for a user and project';
+    protected $description = 'Create a new time entry for a user and project, without starting the timer';
 
-    public function __construct(private TimeEntryService $timeEntryService)
+     public function __construct(private TimeEntryService $timeEntryService)
     {
         parent::__construct();
     }
 
-    public function handle(): int
-    {
+    /**
+     * Execute the console command.
+     */
+    public function handle()
+    {        
         $user = $this->getUserOption();
 
         if (! $user) {
             return 1;
         }
 
-        // Resolve project
         $projectId = $this->option('project-id');
 
         if (! $projectId) {
-            $projects = Project::where('user_id', $user->id)->with('client')->orderBy('name')->get();
+            $projects = Project::where('user_id', $user->id)
+                ->with('client')
+                ->orderBy('name')
+                ->get();
 
             if ($projects->isEmpty()) {
                 error('No projects found for this user. Create a project first.');
-
                 return 1;
             }
 
@@ -82,19 +80,20 @@ class StartTimeEntryCommand extends Command
         }
 
         $data = [
+            'start_time' => $this->argument('start') ? Carbon::parse($this->argument('start')) : now(),
+            'end_time' => $this->argument('end') ? Carbon::parse($this->argument('end')) : now(),
             'description' => $this->option('description'),
             'is_billable' => (bool) $this->option('billable'),
         ];
-        try {
-            $entry = $this->timeEntryService->startTimer($user->id, (int) $projectId, $data);
 
-            $this->info(sprintf('Started timer #%d for project #%d (%s) at %s', $entry->id, $entry->project_id, $entry->project->name, $entry->start_time));
+        $entry = $this->timeEntryService->createManualEntry($user->id, (int) $projectId, $data);
 
+        if ($entry) {
+            info('Time entry created with ID: '.$entry->id);
             return 0;
-        } catch (\Exception $e) {
-            $this->error($e->getMessage());
-
-            return 1;
         }
+
+        error('Failed to create time entry.');
+        return 1;
     }
 }

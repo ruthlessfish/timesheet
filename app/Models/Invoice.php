@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 class Invoice extends Model
 {
@@ -42,7 +43,18 @@ class Invoice extends Model
 
         static::creating(function ($invoice) {
             if (empty($invoice->invoice_number)) {
-                $invoice->invoice_number = 'INV-'.date('Y').'-'.str_pad((Invoice::whereYear('created_at', date('Y'))->count() + 1), 4, '0', STR_PAD_LEFT);
+                $year = date('Y');
+                $latest = Invoice::whereYear('created_at', $year)
+                    ->orderByDesc('id')
+                    ->value('invoice_number');
+
+                if ($latest && preg_match('/INV-'.$year.'-(\d+)$/', $latest, $matches)) {
+                    $next = (int) $matches[1] + 1;
+                } else {
+                    $next = 1;
+                }
+
+                $invoice->invoice_number = 'INV-'.$year.'-'.str_pad($next, 4, '0', STR_PAD_LEFT);
             }
         });
     }
@@ -88,9 +100,9 @@ class Invoice extends Model
      * Time entry items are grouped by project, summing hours and amounts.
      * Expense items are returned individually.
      *
-     * @return \Illuminate\Support\Collection<int, object{type: string, description: string, quantity: float, rate: float, amount: float}>
+     * @return Collection<int, object{type: string, description: string, quantity: float, rate: float, amount: float}>
      */
-    public function getConsolidatedItemsAttribute(): \Illuminate\Support\Collection
+    public function getConsolidatedItemsAttribute(): Collection
     {
         $items = $this->items->loadMissing('timeEntry.project', 'expense');
 

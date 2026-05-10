@@ -2,9 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\User;
+use App\Console\Command;
 use App\Services\TimeEntryService;
-use Illuminate\Console\Command;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\error;
@@ -28,19 +27,9 @@ class StopTimeEntryCommand extends Command
 
     public function handle(): int
     {
-        $userArg = $this->option('user');
-
-        if (! $userArg) {
-            error('Please provide --user (id or email).');
-
-            return 1;
-        }
-
-        $user = User::where('id', $userArg)->orWhere('email', $userArg)->first();
+        $user = $this->getUserOption();
 
         if (! $user) {
-            error('User not found.');
-
             return 1;
         }
 

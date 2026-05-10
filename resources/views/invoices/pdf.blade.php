@@ -196,7 +196,16 @@
                     <div class="info-content">
                         <strong>{{ $company->name }}</strong><br>
                         @if($company->address)
-                        {!! nl2br(e($company->address)) !!}
+                        {!! nl2br(e($company->address)) !!}<br>
+                        @endif
+                        @if($company->phone)
+                        Phone: {{ $company->phone }}<br>
+                        @endif
+                        @if($company->email)
+                        Email: {{ $company->email }}<br>
+                        @endif
+                        @if($company->website)
+                        Web: {{ $company->website }}
                         @endif
                     </div>
                     @else
