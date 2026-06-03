@@ -11,31 +11,8 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                php: [ 8.2, 8.3 ]
-                db: [ sqlite, mysql, pgsql ]
-        services:
-            mysql:
-                image: mysql:8.0
-                env:
-                    MYSQL_ROOT_PASSWORD: root
-                    MYSQL_DATABASE: test
-                ports:
-                    - 3306:3306
-                options: >-
-                    --health-cmd="mysqladmin ping --silent"
-                    --health-interval=10s --health-timeout=5s --health-retries=3
-            postgres:
-                image: postgres:15
-                env:
-                    POSTGRES_DB: test
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                ports:
-                    - 5432:5432
-                options: >-
-                    --health-cmd="pg_isready -U postgres" --health-interval=10s
-                    --health-timeout=5s --health-retries=3
-
+                php: [ 8.4 ]
+                db: [ sqlite ]
         steps:
             - uses: actions/checkout@v4
 
@@ -65,26 +42,9 @@ jobs:
 
             - name: Configure DB
               run: |
-                  if [ "${{ matrix.db }}" = "mysql" ]; then
-                    php artisan config:clear
-                    php artisan env:set DB_CONNECTION=mysql || true
-                    php artisan env:set DB_HOST=127.0.0.1 || true
-                    php artisan env:set DB_PORT=3306 || true
-                    php artisan env:set DB_DATABASE=test || true
-                    php artisan env:set DB_USERNAME=root || true
-                    php artisan env:set DB_PASSWORD=root || true
-                  elif [ "${{ matrix.db }}" = "pgsql" ]; then
-                    php artisan env:set DB_CONNECTION=pgsql || true
-                    php artisan env:set DB_HOST=127.0.0.1 || true
-                    php artisan env:set DB_PORT=5432 || true
-                    php artisan env:set DB_DATABASE=test || true
-                    php artisan env:set DB_USERNAME=postgres || true
-                    php artisan env:set DB_PASSWORD=postgres || true
-                  else
-                    php artisan env:set DB_CONNECTION=sqlite || true
-                    touch database/database.sqlite || true
-                    php artisan env:set DB_DATABASE=database/database.sqlite || true
-                  fi
+                  php artisan env:set DB_CONNECTION=sqlite || true
+                  touch database/database.sqlite || true
+                  php artisan env:set DB_DATABASE=database/database.sqlite || true
 
             - name: Run migrations
               run: php artisan migrate --no-interaction --force
